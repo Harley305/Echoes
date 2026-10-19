@@ -71,84 +71,73 @@ content:'';position:absolute;inset:0;pointer-events:none;z-index:1;
 background:radial-gradient(ellipse at 50% 45%,transparent 50%,#000000b0 100%);
 }
 #city-bg{position:absolute;inset:0;width:100%;height:100%}
-/* == BUILDING GRID == */
-#bmap{
-position:absolute;inset:0;z-index:2;
-display:grid;
-grid-template-columns:repeat(5,1fr);
-grid-template-rows:repeat(4,1fr);
-gap:8px;padding:10px 10px 28px;
-}
+/* == BUILDINGS IN THE SCENE ==
+   The buildings are painted on the city canvas; each .bnode is an
+   invisible hit area standing on its building, with a floating nameplate. */
+#bmap{position:absolute;inset:0;z-index:2;pointer-events:none}
 .bnode{
 --bc:#c8a97e;
-border:1px solid #ffffff08;border-radius:6px;
-display:flex;flex-direction:column;align-items:center;justify-content:center;
-cursor:pointer;position:relative;overflow:hidden;
-transition:transform .2s,box-shadow .2s,border-color .2s,background .2s;
-min-height:0;
+position:absolute;transform:translate(-50%,-100%);
+pointer-events:auto;cursor:pointer;border-radius:6px 6px 2px 2px;
 }
-/* empty plots: let the scenery show through */
-.bnode.empty{background:transparent;border:1px dashed #ffffff05;cursor:default}
-/* built buildings: lit cards */
-.bnode.built{
-background:
-  radial-gradient(ellipse at 50% 100%,color-mix(in srgb,var(--bc) 24%,transparent),transparent 70%),
-  linear-gradient(180deg,#ffffff07,#00000066);
-border-color:color-mix(in srgb,var(--bc) 28%,transparent);
-box-shadow:inset 0 1px 0 #ffffff10,0 4px 14px #00000077;
-backdrop-filter:blur(3px);
+.bnode.locked{cursor:default}
+.bnode-plate{
+position:absolute;left:50%;bottom:calc(100% + 4px);transform:translate(calc(-50% + var(--px,0px)),var(--py,0px));
+display:flex;align-items:center;gap:5px;white-space:nowrap;
+padding:3px 9px 3px 7px;border-radius:12px;
+font-family:'Cinzel',serif;font-size:9px;letter-spacing:.5px;color:var(--bc);
+background:#0b0907d9;border:1px solid color-mix(in srgb,var(--bc) 38%,transparent);
+box-shadow:0 3px 10px #000a;backdrop-filter:blur(3px);
+transition:transform .2s,border-color .2s,box-shadow .2s,opacity .2s;
 }
-/* unlocked but not built yet: a ghostly plot inviting construction */
-.bnode.unbuilt:not(.locked){
-background:#00000040;border-style:dashed;
-border-color:color-mix(in srgb,var(--bc) 32%,transparent);
-backdrop-filter:blur(2px);
+/* little stem pointing down at the building */
+.bnode-plate::after{
+content:'';position:absolute;left:calc(50% - var(--px,0px));top:100%;width:1px;height:calc(5px - var(--py,0px));
+background:color-mix(in srgb,var(--bc) 50%,transparent);
 }
-.bnode.locked{opacity:.4;cursor:default;filter:grayscale(.8);background:#00000060;backdrop-filter:blur(2px)}
-.bnode:hover:not(.locked):not(.empty){
-transform:translateY(-3px);
-border-color:var(--bc);
-box-shadow:0 10px 22px #000b,0 0 16px color-mix(in srgb,var(--bc) 30%,transparent);
-}
-.bnode.selected{border-color:var(--bc);box-shadow:0 0 16px color-mix(in srgb,var(--bc) 40%,transparent)}
-.bnode.ready{border-color:#7aca8a55}
-.bnode.maxed{border-color:color-mix(in srgb,var(--bc) 55%,transparent)}
-.bnode-glow{
-position:absolute;left:12%;right:12%;bottom:6%;height:34%;border-radius:50%;pointer-events:none;
-background:radial-gradient(ellipse,color-mix(in srgb,var(--bc) 40%,transparent),transparent 70%);
-opacity:0;
-}
-.bnode.built .bnode-glow{opacity:.75;animation:glowPulse 4s ease-in-out infinite;animation-delay:var(--d,0s)}
-@keyframes glowPulse{0%,100%{opacity:.45;transform:scaleX(.9)}50%{opacity:.9;transform:scaleX(1.05)}}
-.bnode-icon{font-size:clamp(20px,3.8vw,32px);line-height:1;margin-bottom:3px;position:relative}
-.bnode.built .bnode-icon{filter:drop-shadow(0 0 6px var(--bc));animation:bob 3.4s ease-in-out infinite;animation-delay:var(--d,0s)}
-.bnode-icon.ghost{font-family:'Cinzel',serif;color:var(--bc);opacity:.45;font-size:clamp(16px,3vw,24px);animation:breathe 2.6s ease-in-out infinite}
-.bnode.locked .bnode-icon.ghost{color:#777;animation:none;font-size:clamp(13px,2.4vw,18px)}
-@keyframes breathe{0%,100%{opacity:.25;transform:scale(.92)}50%{opacity:.6;transform:scale(1.05)}}
-.bnode-name{font-family:'Cinzel',serif;font-size:clamp(7px,1.2vw,9px);letter-spacing:.5px;text-align:center;line-height:1.2;position:relative}
-.bnode.built .bnode-name{color:var(--bc);text-shadow:0 0 8px #000}
-.bnode.unbuilt .bnode-name{color:#7a6c55}
-.bnode.locked .bnode-name{color:#444}
-.bnode-pips{display:flex;gap:4px;margin:4px 0 1px;position:relative}
-.pip{width:5px;height:5px;transform:rotate(45deg);background:#ffffff14;display:block}
+.bnode-icon{font-size:12px;line-height:1}
+.bnode.built .bnode-icon{filter:drop-shadow(0 0 4px var(--bc))}
+.bnode-name{color:var(--bc);text-shadow:0 0 6px #000}
+.bnode-lv{color:#8a7d68;font-size:8px;letter-spacing:1px}
+.bnode.maxed .bnode-lv{color:var(--green)}
+.bnode-pips{display:flex;gap:3px;margin:0 1px}
+.pip{width:5px;height:5px;transform:rotate(45deg);background:#ffffff1a;display:block}
 .pip.on{background:var(--bc);box-shadow:0 0 5px var(--bc)}
-.bnode-lv{font-size:clamp(8px,1.3vw,10px);color:#776a58;margin-top:1px;position:relative}
-.bnode.maxed .bnode-lv{color:var(--green);font-family:'Cinzel',serif;letter-spacing:2px}
-.bnode-bar{position:absolute;bottom:4px;left:8px;right:8px;height:2px;background:#ffffff0a;border-radius:1px;overflow:hidden}
-.bnode-fill{height:100%;border-radius:1px;transition:width .4s}
-.bnode-timer{position:absolute;top:4px;right:6px;font-size:9px;color:var(--void);font-family:'Cinzel',serif;text-shadow:0 0 6px var(--void)}
-.bnode-ready{position:absolute;top:4px;left:6px;font-size:10px;color:var(--green);text-shadow:0 0 8px var(--green);animation:readyBob 1.2s ease-in-out infinite}
-@keyframes readyBob{0%,100%{transform:translateY(0);opacity:.7}50%{transform:translateY(-3px);opacity:1}}
-/* under construction: moving scaffold stripes */
-.bnode.upgrading{border-color:var(--void);animation:pulse-blue 1.5s infinite}
-.bnode.upgrading::before{
-content:'';position:absolute;inset:0;pointer-events:none;
-background:repeating-linear-gradient(-45deg,#8a9fe814 0 6px,transparent 6px 12px);
-background-size:17px 17px;animation:scaffold 1s linear infinite;
+.pip.over.on{background:#fff4dc}
+.bnode-pips.many{gap:2px}
+.bnode-pips.many .pip{width:4px;height:4px}
+.bnode-timer{color:var(--void);text-shadow:0 0 6px var(--void)}
+.bnode-timer:empty{display:none}
+.bnode-bar{display:none;position:absolute;left:10px;right:10px;bottom:2px;height:2px;background:#ffffff12;border-radius:1px;overflow:hidden}
+.bnode-fill{height:100%;width:0;background:var(--void);transition:width .4s}
+.bnode.upgrading .bnode-bar{display:block}
+.bnode-ready{color:var(--green);font-size:9px;text-shadow:0 0 8px var(--green);animation:readyBob 1.2s ease-in-out infinite}
+@keyframes readyBob{0%,100%{transform:translateY(0);opacity:.7}50%{transform:translateY(-2px);opacity:1}}
+/* hover / selected: the plate lifts and glows (the canvas lights the building) */
+.bnode:hover .bnode-plate,.bnode.selected .bnode-plate{
+transform:translate(calc(-50% + var(--px,0px)),calc(var(--py,0px) - 3px));border-color:var(--bc);
+box-shadow:0 6px 16px #000c,0 0 14px color-mix(in srgb,var(--bc) 35%,transparent);
+z-index:5;
 }
-@keyframes scaffold{to{background-position:17px 0}}
-.bnode.upgrading .bnode-icon{animation:hammer .7s ease-in-out infinite}
-@keyframes hammer{0%,100%{transform:rotate(0)}50%{transform:rotate(-10deg) translateY(-2px)}}
+.bnode:hover,.bnode.selected{z-index:1000 !important}
+.bnode.ready .bnode-plate{border-color:#7aca8a66}
+.bnode.upgrading .bnode-plate{border-color:var(--void);animation:pulse-blue 1.5s infinite}
+.bnode.upgrading .bnode-icon{animation:hammer .7s ease-in-out infinite;display:inline-block}
+@keyframes hammer{0%,100%{transform:rotate(0)}50%{transform:rotate(-14deg) translateY(-1px)}}
+/* a plot waiting to be built: dashed, quieter plate */
+.bnode.unbuilt:not(.locked):not(.upgrading) .bnode-plate{border-style:dashed;background:#0b0907b0}
+.bnode.unbuilt:not(.locked) .bnode-icon{color:var(--bc);font-size:13px;animation:breathe 2.6s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.45}50%{opacity:1}}
+.bnode.unbuilt .bnode-lv{color:var(--bc);opacity:.7}
+/* locked plots: just rubble in the scene; the plate only shows on hover */
+.bnode.locked .bnode-plate{opacity:0;color:#777;border-color:#ffffff14;pointer-events:none}
+.bnode.locked:hover .bnode-plate{opacity:1}
+.bnode.locked .bnode-name{color:#888}
+/* narrow views: icon, pips and level only; the name appears on hover/selection */
+#bmap.compact .bnode-name{display:none}
+#bmap.compact .bnode:hover .bnode-name,#bmap.compact .bnode.selected .bnode-name,#bmap.compact .bnode.locked .bnode-name{display:inline}
+#bmap.compact .bnode-plate{padding:2px 6px;gap:3px}
+#bmap.compact .bnode-pips{display:none}
 /* == RIGHT PANEL == */
 #rpanel{
 width:270px;flex-shrink:0;
@@ -1051,7 +1040,6 @@ background:linear-gradient(180deg,rgba(40,44,150,.55) 0%,rgba(50,36,110,.2) 45%,
 /* == PHONE READABILITY == */
 @media(max-width:700px){
 /* nothing important below ~9-10px on a phone */
-.bnode-name{font-size:9px}
 .bnode-lv{font-size:9px}
 .section-label{font-size:9px}
 .ptab{font-size:10px;padding:12px 4px}
@@ -1117,7 +1105,6 @@ display:flex;align-items:center;gap:8px;z-index:20;
 @media(max-width:560px){
 #rpanel{width:100%;max-height:38vh;border-left:none;border-top:1px solid #ffffff08}
 #main{flex-direction:column}
-#bmap{grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(4,1fr);gap:5px}
 }
 /* == TITLE / SPLASH SCREEN == */
 #splash{

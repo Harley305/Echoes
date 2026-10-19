@@ -8,7 +8,7 @@ const BDATA = [
   {
     id: "keep", name: "Iron Keep", icon: "\u{1F3F0}", color: "#c8a97e",
     lore: "The seat of power. Everything rises from this stone.",
-    max: 5, unlock: 1, grid: 12, shape: "castle",
+    max: 5, unlock: 1, shape: "castle",
     costs: [
       { s: 0, w: 0, e: 0, t: 0 },
       { s: 80, w: 60, e: 10, t: 8 },
@@ -21,7 +21,7 @@ const BDATA = [
   {
     id: "barracks", name: "Barracks", icon: "\u{2694}\u{FE0F}", color: "#e8907c",
     lore: "Where common men become soldiers.",
-    max: 4, unlock: 1, grid: 7, shape: "box",
+    max: 4, unlock: 1, shape: "box",
     costs: [
       { s: 60, w: 40, e: 0, t: 5 },
       { s: 150, w: 100, e: 20, t: 12 },
@@ -33,7 +33,7 @@ const BDATA = [
   {
     id: "farm", name: "Ancient Farm", icon: "\u{1F33E}", color: "#9aca7a",
     lore: "Seeds that remember a lost world.",
-    max: 4, unlock: 1, grid: 17, shape: "low",
+    max: 4, unlock: 1, shape: "low",
     costs: [
       { s: 40, w: 60, e: 0, t: 4 },
       { s: 100, w: 150, e: 10, t: 10 },
@@ -45,7 +45,7 @@ const BDATA = [
   {
     id: "quarry", name: "Stone Quarry", icon: "\u{26CF}\u{FE0F}", color: "#b0a888",
     lore: "The stone here hums when nobody is watching.",
-    max: 4, unlock: 1, grid: 6, shape: "box",
+    max: 4, unlock: 1, shape: "box",
     costs: [
       { s: 50, w: 30, e: 0, t: 5 },
       { s: 120, w: 80, e: 10, t: 11 },
@@ -57,7 +57,7 @@ const BDATA = [
   {
     id: "archive", name: "Void Archive", icon: "\u{1F4DA}", color: "#8a9fe8",
     lore: "The fragments of truth are stored here. Dangerous.",
-    max: 4, unlock: 2, grid: 2, shape: "tower",
+    max: 4, unlock: 2, shape: "tower",
     costs: [
       { s: 100, w: 80, e: 30, t: 15 },
       { s: 250, w: 180, e: 80, t: 28 },
@@ -69,7 +69,7 @@ const BDATA = [
   {
     id: "market", name: "Shadow Market", icon: "\u{1F4B0}", color: "#e8d07c",
     lore: "Trade in things not always visible.",
-    max: 4, unlock: 2, grid: 16, shape: "wide",
+    max: 4, unlock: 2, shape: "wide",
     costs: [
       { s: 80, w: 100, e: 15, t: 10 },
       { s: 200, w: 250, e: 50, t: 22 },
@@ -81,7 +81,7 @@ const BDATA = [
   {
     id: "tower", name: "Void Tower", icon: "\u{1F5FC}", color: "#b8d4e8",
     lore: "It sees across timelines.",
-    max: 3, unlock: 3, grid: 1, shape: "spire",
+    max: 3, unlock: 3, shape: "spire",
     costs: [
       { s: 200, w: 150, e: 80, t: 28 },
       { s: 500, w: 380, e: 200, t: 60 },
@@ -92,7 +92,7 @@ const BDATA = [
   {
     id: "wall", name: "Ancient Wall", icon: "\u{1F9F1}", color: "#a09070",
     lore: "Built to keep something in, not out.",
-    max: 3, unlock: 3, grid: 18, shape: "wall",
+    max: 3, unlock: 3, shape: "wall",
     costs: [
       { s: 300, w: 200, e: 40, t: 24 },
       { s: 700, w: 450, e: 120, t: 52 },
@@ -103,7 +103,7 @@ const BDATA = [
   {
     id: "temple", name: "Pale Temple", icon: "\u{1F52E}", color: "#d8e8f0",
     lore: "Prophecies written in future tense.",
-    max: 3, unlock: 4, grid: 3, shape: "dome",
+    max: 3, unlock: 4, shape: "dome",
     costs: [
       { s: 400, w: 300, e: 150, t: 44 },
       { s: 900, w: 700, e: 350, t: 88 },
@@ -114,7 +114,7 @@ const BDATA = [
   {
     id: "forge", name: "Iron Forge", icon: "\u{2699}\u{FE0F}", color: "#e8a07c",
     lore: "Runs on something older than fire.",
-    max: 3, unlock: 4, grid: 19, shape: "ind",
+    max: 3, unlock: 4, shape: "ind",
     costs: [
       { s: 350, w: 250, e: 120, t: 40 },
       { s: 800, w: 600, e: 280, t: 82 },
@@ -126,7 +126,7 @@ const BDATA = [
   {
     id: "echowell", name: "Echo Well", icon: "\u{1F30A}", color: "#7fd8d0",
     lore: "Drop a stone in and you hear it land years ago.",
-    max: 3, unlock: 6, grid: 11, shape: "tower",
+    max: 3, unlock: 6, shape: "tower",
     costs: [
       { s: 2000, w: 1500, e: 600, t: 120 },
       { s: 4000, w: 3000, e: 1200, t: 240 },
@@ -137,7 +137,7 @@ const BDATA = [
   {
     id: "reliquary", name: "Reliquary", icon: "\u{1F3FA}", color: "#c08ae8",
     lore: "Every relic in it has been found twice.",
-    max: 3, unlock: 7, grid: 13, shape: "dome",
+    max: 3, unlock: 7, shape: "dome",
     costs: [
       { s: 3000, w: 2500, e: 1000, t: 180 },
       { s: 6000, w: 5000, e: 2000, t: 300 },
@@ -148,7 +148,7 @@ const BDATA = [
   {
     id: "beacon", name: "Pathfinder's Beacon", icon: "\u{1F9ED}", color: "#e8c07c",
     lore: "A light the wastes have never managed to put out.",
-    max: 3, unlock: 8, grid: 8, shape: "spire",
+    max: 3, unlock: 8, shape: "spire",
     costs: [
       { s: 5000, w: 4000, e: 1500, t: 240 },
       { s: 9000, w: 7500, e: 3000, t: 420 },
@@ -159,7 +159,7 @@ const BDATA = [
   {
     id: "hall", name: "Hall of Ancestors", icon: "\u{1F3DB}\u{FE0F}", color: "#d8c8a0",
     lore: "Statues of everyone who ever led this city. Some of them have your face.",
-    max: 3, unlock: 9, grid: 14, shape: "wide",
+    max: 3, unlock: 9, shape: "wide",
     costs: [
       { s: 8000, w: 6000, e: 2500, t: 300 },
       { s: 14000, w: 11000, e: 4500, t: 540 },
@@ -170,7 +170,7 @@ const BDATA = [
   {
     id: "observatory", name: "Star Observatory", icon: "\u{1F52D}", color: "#9ab8f0",
     lore: "It charts the stars that haven't risen yet.",
-    max: 3, unlock: 10, grid: 10, shape: "dome",
+    max: 3, unlock: 10, shape: "dome",
     costs: [
       { s: 12000, w: 10000, e: 4000, t: 360 },
       { s: 20000, w: 17000, e: 7000, t: 600 },
@@ -517,6 +517,40 @@ function bonusText(b, lv) {
   if (b.id === "forge") return `Overcharged: heroes +${3 + 2 * k} ATK`;
   return `Overcharged: +${2 * k}% all production`;
 }
+// ---------- where each building stands in the city scene ----------
+// x = fraction of the view's width, y = its ground line (fraction of height),
+// d = depth scale (the back row sits on the horizon and is drawn smaller)
+const CITY_PLOTS = {
+  keep: { x: 0.5, y: 0.66, d: 0.95 },
+  observatory: { x: 0.07, y: 0.668, d: 0.6 },
+  archive: { x: 0.18, y: 0.668, d: 0.64 },
+  wall: { x: 0.3, y: 0.672, d: 0.7 },
+  temple: { x: 0.83, y: 0.668, d: 0.64 },
+  tower: { x: 0.94, y: 0.668, d: 0.6 },
+  hall: { x: 0.1, y: 0.79, d: 0.8 },
+  barracks: { x: 0.27, y: 0.8, d: 0.82 },
+  echowell: { x: 0.5, y: 0.8, d: 0.75 },
+  market: { x: 0.73, y: 0.8, d: 0.82 },
+  forge: { x: 0.9, y: 0.79, d: 0.8 },
+  farm: { x: 0.14, y: 0.93, d: 0.95 },
+  quarry: { x: 0.36, y: 0.935, d: 0.95 },
+  reliquary: { x: 0.64, y: 0.935, d: 0.92 },
+  beacon: { x: 0.86, y: 0.93, d: 0.95 }
+};
+// clickable size of each building, in drawing units
+const PLOT_BOX = {
+  keep: [64, 96], barracks: [34, 40], farm: [46, 34], quarry: [44, 26], archive: [24, 62], market: [48, 22],
+  tower: [14, 78], wall: [60, 22], temple: [30, 40], forge: [32, 42], echowell: [24, 30], reliquary: [26, 36],
+  beacon: [14, 56], hall: [48, 30], observatory: [26, 40]
+};
+function plotGeom(id, w, h) {
+  const pl = CITY_PLOTS[id];
+  const u = Math.max(0.7, Math.min(w, h) / 300) * pl.d;
+  // the keep's hit area grows with the castle so its plate sits on the walls, not in the sky
+  const box = id === "keep" ? [64, 70 + (castleTier() - 1) * 6] : PLOT_BOX[id];
+  return { x: pl.x * w, y: pl.y * h, u, box, gap: ((1 - 2 * pl.x) * w) / u };
+}
+let cityHover = null; // building under the pointer, lit up on the canvas
 (function () {
   const cv = $("city-bg");
   const ctx = cv.getContext("2d");
@@ -1122,6 +1156,380 @@ function bonusText(b, lv) {
     } else TIER_ART[tier - 1].draw(t);
   }
 
+  // ---------- the town: every building stands in the scene around the keep ----------
+  // shapes are drawn in "units" from a base point (x center, y ground), like the castle
+  let T = { x: 0, y: 0, u: 1 };
+  const tx = (x) => T.x + x * T.u, ty = (y) => T.y + y * T.u;
+  function tRect(x, top, wd, col = SIL, rim = RIM) {
+    ctx.fillStyle = col;
+    ctx.fillRect(tx(x), ty(top), wd * T.u, -top * T.u);
+    if (rim) {
+      ctx.fillStyle = rim;
+      ctx.fillRect(tx(x + wd) - Math.max(1, T.u * 0.9), ty(top), Math.max(1, T.u * 0.9), -top * T.u);
+    }
+  }
+  function tBlock(x, y0, wd, ht, col = SIL) {
+    ctx.fillStyle = col;
+    ctx.fillRect(tx(x), ty(y0 - ht), wd * T.u, ht * T.u);
+  }
+  function tTri(x, base, wd, ht, col = SIL) {
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.moveTo(tx(x), ty(base));
+    ctx.lineTo(tx(x + wd / 2), ty(base - ht));
+    ctx.lineTo(tx(x + wd), ty(base));
+    ctx.fill();
+  }
+  function tDome(x, base, r, col = SIL) {
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.arc(tx(x), ty(base), r * T.u, Math.PI, 0);
+    ctx.fill();
+  }
+  function tGlow(x, y, r, color) {
+    const gx = tx(x), gy = ty(y), rr = r * T.u;
+    const g = ctx.createRadialGradient(gx, gy, 0, gx, gy, rr);
+    g.addColorStop(0, color);
+    g.addColorStop(1, "transparent");
+    ctx.fillStyle = g;
+    ctx.fillRect(gx - rr, gy - rr, rr * 2, rr * 2);
+  }
+  function tWindows(list, color, seed) {
+    ctx.save();
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 6;
+    list.forEach(([wx, wy], i) => {
+      const f = 0.55 + Math.sin(t * 0.07 + i * 1.9 + seed) * 0.2 + Math.sin(t * 0.29 + i + seed) * 0.07;
+      ctx.globalAlpha = f;
+      ctx.fillStyle = color;
+      ctx.fillRect(tx(wx - 1.2), ty(wy), 2.4 * T.u, 3.4 * T.u);
+    });
+    ctx.restore();
+  }
+  const rgba = (hex, a) => {
+    const n = parseInt(hex.slice(1), 16);
+    return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`;
+  };
+  // g: 0.6 (just built) .. 1 (at its original max); taller buildings as they level
+  const TOWN_ART = {
+    barracks(g, c, s) {
+      const ht = 14 + 8 * g;
+      tRect(-15, -ht, 30);
+      tTri(-17, -ht, 34, 8, "#100a07");
+      tBlock(-3, 0, 6, 8, "#1a120c");
+      tWindows([[-9, -ht + 4], [9, -ht + 4]], "#ffbe74", s);
+      // banner pole
+      ctx.fillStyle = SIL;
+      ctx.fillRect(tx(15), ty(-ht - 14), Math.max(1, 0.8 * T.u), (ht + 14) * T.u);
+      const wave = Math.sin(t * 0.07 + s) * 1.6;
+      ctx.fillStyle = rgba(c, 0.85);
+      ctx.beginPath();
+      ctx.moveTo(tx(15.6), ty(-ht - 14));
+      ctx.lineTo(tx(24), ty(-ht - 11.5 + wave * 0.3));
+      ctx.lineTo(tx(15.6), ty(-ht - 8.5));
+      ctx.fill();
+    },
+    farm(g, c, s) {
+      // field rows in front, a barn and a turning windmill
+      ctx.strokeStyle = rgba(c, 0.22);
+      ctx.lineWidth = Math.max(1, 0.8 * T.u);
+      for (let i = 0; i < 5; i++) {
+        ctx.beginPath();
+        ctx.moveTo(tx(-26 + i * 3), ty(4 + i * 1.6));
+        ctx.lineTo(tx(10 + i * 4), ty(4 + i * 1.6));
+        ctx.stroke();
+      }
+      const ht = 8 + 5 * g;
+      tRect(-22, -ht, 24);
+      tTri(-24, -ht, 28, 7, "#100a07");
+      tWindows([[-10, -ht + 3]], "#ffbe74", s);
+      const mx = 12, mh = 18 + 8 * g;
+      ctx.fillStyle = SIL;
+      ctx.beginPath();
+      ctx.moveTo(tx(mx - 4), ty(0));
+      ctx.lineTo(tx(mx - 2), ty(-mh));
+      ctx.lineTo(tx(mx + 2), ty(-mh));
+      ctx.lineTo(tx(mx + 4), ty(0));
+      ctx.fill();
+      ctx.strokeStyle = "#1c130c";
+      ctx.lineWidth = Math.max(1, 1.4 * T.u);
+      const a0 = t * 0.02 + s;
+      for (let k = 0; k < 4; k++) {
+        const a = a0 + (k * Math.PI) / 2;
+        ctx.beginPath();
+        ctx.moveTo(tx(mx), ty(-mh));
+        ctx.lineTo(tx(mx + Math.cos(a) * 11), ty(-mh + Math.sin(a) * 11));
+        ctx.stroke();
+      }
+    },
+    quarry(g, c, s) {
+      // a cut stone face, a hoist and a pile of blocks
+      ctx.fillStyle = "#14100c";
+      ctx.beginPath();
+      ctx.moveTo(tx(-20), ty(0));
+      ctx.lineTo(tx(-16), ty(-12 - 6 * g));
+      ctx.lineTo(tx(-4), ty(-16 - 8 * g));
+      ctx.lineTo(tx(4), ty(-10 - 5 * g));
+      ctx.lineTo(tx(8), ty(0));
+      ctx.fill();
+      ctx.fillStyle = rgba(c, 0.25);
+      for (let i = 0; i < 3; i++) ctx.fillRect(tx(-14 + i * 5), ty(-6 - i * 3), 4 * T.u, 0.8 * T.u);
+      ctx.fillStyle = SIL;
+      ctx.fillRect(tx(12), ty(-22), Math.max(1, T.u), 22 * T.u);
+      ctx.fillRect(tx(12), ty(-22), 10 * T.u, Math.max(1, T.u));
+      const bob = Math.sin(t * 0.05 + s) * 2;
+      ctx.strokeStyle = "#2a2018";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(tx(21), ty(-21));
+      ctx.lineTo(tx(21), ty(-12 + bob));
+      ctx.stroke();
+      tBlock(19, -9 + bob, 4, 3, "#2a241c");
+      [[10, 0, 6, 4], [16, 0, 5, 3], [12, -4, 5, 3]].forEach(([x, y, wd, h2]) => tBlock(x, y, wd, h2, "#221c15"));
+    },
+    archive(g, c, s) {
+      const ht = 30 + 18 * g;
+      tRect(-7, -ht, 14);
+      tTri(-9, -ht, 18, 12, "#0f0b10");
+      tRect(-12, -14, 24);
+      tWindows([[0, -ht + 6], [0, -ht + 16], [-6, -10], [6, -10]], rgba(c, 1), s);
+      tGlow(0, -ht - 6, 9, rgba(c, 0.25 + 0.1 * Math.sin(t * 0.05)));
+    },
+    market(g, c, s) {
+      const ht = 10 + 5 * g;
+      tRect(-22, -ht - 4, 44);
+      // striped awnings over three stalls
+      for (let k = 0; k < 3; k++) {
+        const x0 = -20 + k * 14;
+        for (let i = 0; i < 4; i++) {
+          ctx.fillStyle = i % 2 ? rgba(c, 0.85) : "#2a1e12";
+          ctx.beginPath();
+          ctx.moveTo(tx(x0 + i * 3), ty(-ht));
+          ctx.lineTo(tx(x0 + i * 3 + 3), ty(-ht));
+          ctx.lineTo(tx(x0 + i * 3 + 3.6), ty(-ht + 4));
+          ctx.lineTo(tx(x0 + i * 3 - 0.6), ty(-ht + 4));
+          ctx.fill();
+        }
+        tGlow(x0 + 6, -4, 7, "rgba(255,190,110,0.28)");
+      }
+      tTri(-24, -ht - 4, 48, 6, "#100a07");
+    },
+    tower(g, c, s) {
+      const ht = 40 + 26 * g;
+      ctx.fillStyle = SIL;
+      ctx.beginPath();
+      ctx.moveTo(tx(-6), ty(0));
+      ctx.lineTo(tx(-3), ty(-ht));
+      ctx.lineTo(tx(3), ty(-ht));
+      ctx.lineTo(tx(6), ty(0));
+      ctx.fill();
+      tTri(-4, -ht, 8, 10, "#0d0b12");
+      const p = 0.6 + Math.sin(t * 0.04 + s) * 0.3;
+      tGlow(0, -ht - 4, 14, rgba(c, 0.35 * p));
+      ctx.fillStyle = rgba(c, 0.9 * p);
+      ctx.beginPath();
+      ctx.arc(tx(0), ty(-ht + 4), 1.8 * T.u, 0, Math.PI * 2);
+      ctx.fill();
+      tWindows([[0, -ht * 0.55], [0, -ht * 0.3]], rgba(c, 1), s);
+    },
+    wall(g, c, s) {
+      // two curtain walls flanking the keep's foot (mirrored on the far side)
+      const ht = 8 + 5 * g;
+      [[-26, 0], [T.gap - 26, 1]].forEach(([x0]) => {
+        tRect(x0, -ht, 52);
+        for (let i = 0; i < 52; i += 6) tBlock(x0 + i, -ht, 3.5, 3);
+        tRect(x0 - 3, -ht - 7, 8);
+        tRect(x0 + 47, -ht - 7, 8);
+        for (let i = 0; i < 8; i += 4) {
+          tBlock(x0 - 3 + i, -ht - 7, 2.5, 2.5);
+          tBlock(x0 + 47 + i, -ht - 7, 2.5, 2.5);
+        }
+      });
+      const f = 0.75 + Math.sin(t * 0.3 + s) * 0.15;
+      tGlow(1, -ht - 9, 6, `rgba(255,150,70,${0.4 * f})`);
+      tGlow(T.gap + 1, -ht - 9, 6, `rgba(255,150,70,${0.4 * f})`);
+    },
+    temple(g, c, s) {
+      const ht = 10 + 6 * g;
+      tRect(-15, -ht, 30);
+      for (let i = 0; i < 5; i++) tBlock(-13 + i * 6.2, 0, 1.6, ht, "#1a1612");
+      tDome(0, -ht, 11 + 3 * g);
+      tGlow(0, -ht - 6, 16, rgba(c, 0.18 + 0.08 * Math.sin(t * 0.03 + s)));
+      ctx.fillStyle = rgba(c, 0.9);
+      ctx.fillRect(tx(-0.5), ty(-ht - 20 - 3 * g), Math.max(1, T.u), 6 * T.u);
+    },
+    forge(g, c, s) {
+      const ht = 14 + 7 * g;
+      tRect(-16, -ht, 26);
+      tTri(-18, -ht, 30, 6, "#100a07");
+      tRect(6, -ht - 16, 6, SIL, null);
+      const f = 0.75 + Math.sin(t * 0.35 + s) * 0.15 + Math.random() * 0.08;
+      tGlow(-3, -3, 16 * f, `rgba(255,130,50,${0.5 * f})`);
+      ctx.fillStyle = `rgba(255,170,80,${f})`;
+      ctx.fillRect(tx(-7), ty(-7), 8 * T.u, 7 * T.u);
+      // chimney smoke
+      for (let i = 0; i < 4; i++) {
+        const k = ((t * 0.01 + i * 0.25 + s) % 1);
+        ctx.fillStyle = `rgba(90,80,72,${0.25 * (1 - k)})`;
+        ctx.beginPath();
+        ctx.arc(tx(9 + k * 6), ty(-ht - 18 - k * 20), (2 + k * 5) * T.u, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (Math.random() < 0.3) {
+        ctx.fillStyle = "rgba(255,200,110,0.9)";
+        ctx.fillRect(tx(-3 + Math.random() * 6), ty(-8 - Math.random() * 8), 1.4, 1.4);
+      }
+    },
+    echowell(g, c, s) {
+      tBlock(-10, 0, 20, 5 + 2 * g);
+      ctx.fillStyle = rgba(c, 0.55 + 0.25 * Math.sin(t * 0.05 + s));
+      ctx.fillRect(tx(-8), ty(-5 - 2 * g), 16 * T.u, 1.5 * T.u);
+      ctx.fillStyle = SIL;
+      ctx.fillRect(tx(-9), ty(-22), 1.6 * T.u, 22 * T.u);
+      ctx.fillRect(tx(7.4), ty(-22), 1.6 * T.u, 22 * T.u);
+      tTri(-12, -21, 24, 8, "#0d0b10");
+      tGlow(0, -6, 18, rgba(c, 0.22));
+      // rising droplets of light
+      for (let i = 0; i < 3; i++) {
+        const k = (t * 0.008 + i / 3 + s) % 1;
+        ctx.fillStyle = rgba(c, 0.8 * (1 - k));
+        ctx.fillRect(tx(-4 + i * 4), ty(-6 - k * 26), 1.5, 1.5);
+      }
+    },
+    reliquary(g, c, s) {
+      const ht = 8 + 6 * g;
+      tRect(-13, -ht, 26);
+      tDome(0, -ht, 10 + 2 * g);
+      tBlock(-1, -ht - 10 - 2 * g, 2, 6);
+      tBlock(-3, -ht - 14 - 2 * g, 6, 1.6);
+      tWindows([[-7, -ht + 3], [7, -ht + 3]], rgba(c, 1), s);
+      tGlow(0, -ht - 4, 14, rgba(c, 0.18));
+    },
+    beacon(g, c, s) {
+      const ht = 30 + 16 * g;
+      ctx.fillStyle = SIL;
+      ctx.beginPath();
+      ctx.moveTo(tx(-7), ty(0));
+      ctx.lineTo(tx(-4), ty(-ht));
+      ctx.lineTo(tx(4), ty(-ht));
+      ctx.lineTo(tx(7), ty(0));
+      ctx.fill();
+      tBlock(-6, -ht, 12, 2.5);
+      const f = 0.8 + Math.sin(t * 0.4 + s) * 0.12 + Math.random() * 0.08;
+      tGlow(0, -ht - 4, 26 * f, `rgba(255,190,90,${0.4 * f})`);
+      ctx.fillStyle = `rgba(255,220,140,${f})`;
+      ctx.beginPath();
+      ctx.moveTo(tx(-3), ty(-ht - 1));
+      ctx.quadraticCurveTo(tx(0), ty(-ht - 11 * f), tx(3), ty(-ht - 1));
+      ctx.fill();
+    },
+    hall(g, c, s) {
+      const ht = 12 + 7 * g;
+      tBlock(-24, 0, 48, 3, "#16110c");
+      tRect(-21, -ht, 42);
+      for (let i = 0; i < 7; i++) tBlock(-19 + i * 6.2, -3, 1.8, ht - 3, "#1e1812");
+      tTri(-24, -ht, 48, 9, "#100b08");
+      tGlow(0, -ht / 2, 22, "rgba(255,190,110,0.12)");
+    },
+    observatory(g, c, s) {
+      const ht = 12 + 8 * g;
+      tRect(-11, -ht, 22);
+      tDome(0, -ht, 11);
+      // telescope slowly sweeping the sky
+      const a = -Math.PI / 2 + Math.sin(t * 0.004 + s) * 0.6 - 0.4;
+      ctx.strokeStyle = "#1c1814";
+      ctx.lineWidth = 2.4 * T.u;
+      ctx.beginPath();
+      ctx.moveTo(tx(0), ty(-ht - 4));
+      ctx.lineTo(tx(Math.cos(a) * 16), ty(-ht - 4 + Math.sin(a) * 16));
+      ctx.stroke();
+      ctx.fillStyle = rgba(c, 0.8);
+      ctx.fillRect(tx(-1), ty(-ht - 10), 2 * T.u, 6 * T.u);
+      tWindows([[-5, -ht + 4], [5, -ht + 4]], rgba(c, 1), s);
+    }
+  };
+  // the dotted plot of a building that isn't built yet
+  function drawFoundation(c, box) {
+    const [bw] = box;
+    ctx.save();
+    ctx.setLineDash([3, 3]);
+    ctx.strokeStyle = rgba(c, 0.3 + 0.12 * Math.sin(t * 0.05));
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(T.x, T.y, (bw / 2) * T.u, 3.5 * T.u, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle = "#2a2016";
+    [-bw / 2, -bw / 6, bw / 6, bw / 2].forEach((x) => ctx.fillRect(tx(x), ty(-5), Math.max(1, 0.9 * T.u), 5 * T.u));
+  }
+  function drawRubble(seed) {
+    ctx.fillStyle = "#0d0a07";
+    for (let i = 0; i < 4; i++) {
+      const r = 2 + ((seed * (i + 3)) % 3);
+      ctx.beginPath();
+      ctx.arc(tx(-8 + i * 5), ty(0), r * T.u, Math.PI, 0);
+      ctx.fill();
+    }
+  }
+  function drawScaffold(box) {
+    const [bw, bh] = box;
+    ctx.strokeStyle = "rgba(138,159,232,0.55)";
+    ctx.lineWidth = Math.max(1, 0.7 * T.u);
+    ctx.beginPath();
+    for (let x = -bw / 2; x <= bw / 2 + 0.1; x += bw / 3) {
+      ctx.moveTo(tx(x), ty(0));
+      ctx.lineTo(tx(x), ty(-bh * 0.8));
+    }
+    for (let y = -6; y >= -bh * 0.8; y -= 8) {
+      ctx.moveTo(tx(-bw / 2), ty(y));
+      ctx.lineTo(tx(bw / 2), ty(y));
+    }
+    ctx.stroke();
+    if (Math.random() < 0.25) {
+      ctx.fillStyle = "rgba(200,215,255,0.9)";
+      ctx.fillRect(tx((Math.random() - 0.5) * bw), ty(-Math.random() * bh * 0.8), 1.6, 1.6);
+    }
+  }
+  function drawTown() {
+    const list = BDATA.filter((b) => b.id !== "keep" && CITY_PLOTS[b.id]).map((b) => [b, plotGeom(b.id, w, h)]).sort((a, b) => a[1].y - b[1].y);
+    list.forEach(([b, p], i) => {
+      const bs = S.buildings[b.id];
+      const locked = b.unlock > S.castleLevel;
+      T = { x: p.x, y: p.y, u: p.u, gap: p.gap };
+      const lit = cityHover === b.id || S.selectedBuilding === b.id;
+      // soft contact shadow
+      ctx.fillStyle = "rgba(0,0,0,0.45)";
+      ctx.beginPath();
+      ctx.ellipse(T.x, T.y + 1, (p.box[0] / 2 + 3) * T.u, 3 * T.u, 0, 0, Math.PI * 2);
+      ctx.fill();
+      if (locked) return drawRubble(i + 2);
+      // backlight and a pool of lamplight, so dark silhouettes read against dark ground
+      if (bs.level > 0 || bs.upgrading) {
+        tGlow(0, -p.box[1] * 0.45, p.box[0] * 0.85, "rgba(232,150,85,0.13)");
+        tGlow(0, 0, p.box[0] * 0.7, rgba(b.color, 0.16));
+      }
+      if (lit) {
+        tGlow(0, -p.box[1] * 0.4, p.box[0] * 0.9, rgba(b.color, 0.22));
+        ctx.save();
+        ctx.shadowColor = b.color;
+        ctx.shadowBlur = 14;
+      }
+      if (bs.level <= 0 && !bs.upgrading) {
+        drawFoundation(b.color, p.box);
+        ctx.globalAlpha = 0.14;
+        TOWN_ART[b.id](0.6, b.color, i);
+        ctx.globalAlpha = 1;
+      } else {
+        const g = 0.6 + 0.4 * Math.min(1, Math.max(bs.level, 1) / b.max);
+        TOWN_ART[b.id](g, b.color, i);
+        // overcharged buildings shimmer with their color
+        if (bs.level > b.max) tGlow(0, -p.box[1] * 0.5, p.box[0] * 0.8, rgba(b.color, 0.1 + 0.06 * Math.sin(t * 0.05 + i)));
+      }
+      if (lit) ctx.restore();
+      if (bs.upgrading) drawScaffold(p.box);
+    });
+  }
+
   function draw(now) {
     requestAnimationFrame(draw);
     // paused while the world map, a battle or the Forge covers the city;
@@ -1224,6 +1632,8 @@ function bonusText(b, lv) {
     ctx.fillRect(w / 2 - 170 * cs, h * 0.6, 340 * cs, 200 * cs);
     // workers, guards, smoke, torches, sparks
     updateLife(t);
+    // the rest of the city, back row first
+    drawTown();
     // Drifting fog
     for (let i = 0; i < 3; i++) {
       const fx = (Math.sin(t * 0.0012 + i * 2.1) * 0.35 + 0.5) * w;
@@ -1408,19 +1818,34 @@ function pipsHtml(b, level) {
 }
 function renderBmap() {
   const map = $("bmap");
-  // 5x4 = 20 slots
-  if (map.children.length === 0) {
-    for (let i = 0; i < 20; i++) {
-      const slot = document.createElement("div");
-      slot.className = "bnode empty";
-      slot.dataset.slot = i;
-      slot.style.setProperty("--d", `-${((i * 0.73) % 3.4).toFixed(2)}s`);
-      map.appendChild(slot);
-    }
-  }
+  const vw = map.offsetWidth, vh = map.offsetHeight;
+  map.classList.toggle("compact", vw < 640);
+  if (!map.children.length)
+    BDATA.forEach((b) => {
+      const n = document.createElement("div");
+      n.className = "bnode";
+      n.dataset.id = b.id;
+      n.style.setProperty("--bc", b.color);
+      n.onmouseenter = () => (cityHover = b.id);
+      n.onmouseleave = () => cityHover === b.id && (cityHover = null);
+      map.appendChild(n);
+    });
   BDATA.forEach((b) => {
-    const slot = map.querySelector(`[data-slot="${b.grid}"]`);
+    const slot = map.querySelector(`[data-id="${b.id}"]`);
     if (!slot) return;
+    // stand the hit area on the building's spot in the painted scene
+    if (vw && CITY_PLOTS[b.id]) {
+      const p = plotGeom(b.id, vw, vh);
+      const geo = `${Math.round(p.x)},${Math.round(p.y)},${Math.round(p.box[0] * p.u)},${Math.round(p.box[1] * p.u)}`;
+      if (slot.dataset.geo !== geo) {
+        slot.dataset.geo = geo;
+        slot.style.left = p.x + "px";
+        slot.style.top = p.y + "px";
+        slot.style.width = p.box[0] * p.u + "px";
+        slot.style.height = p.box[1] * p.u + "px";
+        slot.style.zIndex = Math.round(p.y);
+      }
+    }
     const bs = S.buildings[b.id];
     const locked = b.unlock > S.castleLevel;
     const maxed = bs.level >= bMax(b);
@@ -1428,13 +1853,10 @@ function renderBmap() {
     const built = bs.level > 0;
     const ready = !locked && !maxed && !upgrading && canAffordNext(b);
     const sel = S.selectedBuilding === b.id;
-    // only rebuild the tile's markup when something visible changes,
-    // so the idle animations keep running smoothly
-    const sig = [locked, bs.level, upgrading, ready, sel].join("|");
+    // only rebuild the plate's markup when something visible changes
+    const sig = [locked, bs.level, upgrading, ready, sel, maxed].join("|");
     if (slotSig[b.id] !== sig) {
       slotSig[b.id] = sig;
-      slot.dataset.id = b.id;
-      slot.style.setProperty("--bc", b.color);
       slot.className =
         "bnode" +
         (built ? " built" : " unbuilt") +
@@ -1444,35 +1866,68 @@ function renderBmap() {
         (ready ? " ready" : "") +
         (maxed ? " maxed" : "");
       slot.onclick = locked ? null : () => openBuildingModal(b.id);
-      const lvTxt = locked
-        ? `Castle Lv ${b.unlock}`
-        : upgrading
-        ? built ? `Building Lv ${bs.level + 1}` : "Building..."
-        : built ? (maxed ? "MAX" : `Lv ${bs.level}`) : "Build";
-      slot.innerHTML = `
-        <div class="bnode-glow"></div>
-        ${built
-          ? `<div class="bnode-icon">${b.icon}</div>`
-          : `<div class="bnode-icon ghost">${locked ? "\u{1F512}" : "+"}</div>`}
-        <div class="bnode-name">${locked ? "???" : b.name}</div>
-        ${built ? pipsHtml(b, bs.level) : ""}
-        <div class="bnode-lv">${lvTxt}</div>
-        <div class="bnode-bar"><div class="bnode-fill"></div></div>
-        <div class="bnode-timer"></div>
-        ${ready ? `<div class="bnode-ready" title="Upgrade affordable">\u{25B2}</div>` : ""}`;
+      slot.title = locked ? `${b.name}  -  unlocks at Castle Lv ${b.unlock}` : b.name;
+      const lvTxt = upgrading ? "" : built ? (maxed ? "MAX" : `Lv ${bs.level}`) : "Build";
+      slot.innerHTML = locked
+        ? `<div class="bnode-plate"><span class="bnode-icon">\u{1F512}</span><span class="bnode-name">Castle Lv ${b.unlock}</span></div>`
+        : `<div class="bnode-plate">
+            ${ready ? `<span class="bnode-ready" title="Upgrade affordable">\u{25B2}</span>` : ""}
+            <span class="bnode-icon">${built ? b.icon : "+"}</span>
+            <span class="bnode-name">${b.name}</span>
+            ${built && !upgrading ? pipsHtml(b, bs.level) : ""}
+            <span class="bnode-lv">${lvTxt}</span>
+            <span class="bnode-timer"></span>
+            <div class="bnode-bar"><div class="bnode-fill"></div></div>
+          </div>`;
     }
-    const pct = upgrading
-      ? Math.round((1 - bs.timer / bs.timerMax) * 100)
-      : built ? (bs.level / bMax(b)) * 100 : 0;
-    const fill = slot.querySelector(".bnode-fill");
-    fill.style.width = pct + "%";
-    fill.style.background = upgrading ? "#8a9fe8" : maxed ? "#7aca8a" : b.color;
-    slot.querySelector(".bnode-timer").textContent = upgrading ? `${bs.timer}s` : "";
+    if (locked) return;
+    if (upgrading) {
+      slot.querySelector(".bnode-fill").style.width = Math.round((1 - bs.timer / bs.timerMax) * 100) + "%";
+      slot.querySelector(".bnode-timer").textContent = `${bs.timer}s`;
+    }
   });
+  layoutPlates(map);
   $("castle-badge").textContent = `\u{1F3F0} LV.${S.castleLevel}`;
   $("castle-badge").title = `${CASTLE_TIERS[castleTier() - 1]}  -  tap for the Altar of Memory`;
   $("castle-badge").classList.toggle("can-rebirth", S.castleLevel >= 6);
   document.querySelector(".res-cap").textContent = `/${S.troopCap}`;
+}
+window.addEventListener("resize", () => renderBmap());
+// keeps nameplates inside the view and lifts any that would overlap a plate in front of them
+function layoutPlates(map) {
+  const vw = map.offsetWidth;
+  if (!vw) return;
+  const items = [...map.querySelectorAll(".bnode:not(.locked) .bnode-plate")].map((el) => {
+    const n = el.parentElement;
+    const w = el.offsetWidth, h = el.offsetHeight;
+    const cx = parseFloat(n.style.left) || 0;
+    const top = (parseFloat(n.style.top) || 0) - n.offsetHeight - 4 - h;
+    // horizontal: slide back inside the edges
+    const shift = Math.max(6 - (cx - w / 2), Math.min(0, vw - 6 - (cx + w / 2)));
+    return { el, x0: cx - w / 2 + shift, x1: cx + w / 2 + shift, top, h, shift, lift: 0, base: parseFloat(n.style.top) || 0 };
+  });
+  // front plates keep their spot; plates further back move up to clear them
+  items.sort((a, b) => b.base - a.base);
+  items.forEach((it, i) => {
+    for (let pass = 0; pass < 4; pass++) {
+      let moved = false;
+      for (let j = 0; j < i; j++) {
+        const o = items[j];
+        const t0 = it.top - it.lift, o0 = o.top - o.lift;
+        if (it.x0 < o.x1 + 4 && it.x1 > o.x0 - 4 && t0 < o0 + o.h + 2 && t0 + it.h > o0 - 2) {
+          it.lift += t0 + it.h - (o0 - 3);
+          moved = true;
+        }
+      }
+      if (!moved) break;
+    }
+    const v = `${Math.round(it.shift)}px,${-Math.round(it.lift)}px`;
+    if (it.el.dataset.off !== v) {
+      it.el.dataset.off = v;
+      it.el.style.setProperty("--px", Math.round(it.shift) + "px");
+      it.el.style.setProperty("--py", -Math.round(it.lift) + "px");
+    }
+  });
 }
 function updateRatesUI() {
   const r = getRates();

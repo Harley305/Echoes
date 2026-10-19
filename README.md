@@ -2,6 +2,8 @@
 
 A browser game that mixes city-building with turn-based party combat. Build a keep at the edge of the known world, lead three heroes into the wastes, and dive into roguelike Descents. When the city falls, it remembers.
 
+**▶ [Play it here](https://harley305.github.io/Echoes/)**
+
 No build step and no dependencies: open `index.html` in a browser. Progress saves to `localStorage`.
 
 > Originally prototyped on [CodePen](https://codepen.io/Christopher-Davidson/pen/MYbeEyN).
@@ -9,6 +11,7 @@ No build step and no dependencies: open `index.html` in a browser. Progress save
 ## Features
 
 - **City.** 15 buildings across 10 castle tiers, offline progress, and buildings that can be pushed past their max level.
+- **A living city screen** *(new).* The buildings are drawn into the scene around the keep, in rows from the horizon to the foreground. They grow as they level, show scaffolding while upgrading, and glow when selected. Floating nameplates show each building's level and when an upgrade is affordable.
 - **Champion.** Forge your lead hero by picking a class, an origin and attribute points.
 - **Combat.** Turn-based battles with hidden weaknesses, ward breaks and Surge.
 - **World map.** Explore in 2D or 2.5D isometric view, with ruins, keys, chests and a world boss.

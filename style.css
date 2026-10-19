@@ -1277,3 +1277,47 @@ padding:13px 38px;border-radius:2px;cursor:pointer;transition:all .25s;
 .b-bonus.ready span{opacity:1;filter:none}
 .b-bonus.got{opacity:.45}
 .q-alldone{font-size:12px;color:#6a6050;font-style:italic;padding:4px 0 10px}
+
+/* ================================================================
+   STORY: chapter track, scenes, Chronicle
+   ================================================================ */
+.story-track{display:flex;gap:4px;margin:-2px 0 10px}
+.story-track i{flex:1;height:3px;border-radius:2px;background:#ffffff0d}
+.story-track i.on{background:var(--gold);box-shadow:0 0 5px var(--goldb)}
+.story-track i.cur{background:linear-gradient(90deg,var(--gold),#ffffff10);animation:breathe 2.4s ease-in-out infinite}
+.quest-card.story{border-left:2px solid var(--gold);background:linear-gradient(90deg,var(--goldf),transparent 80%)}
+.q-chapter{font-family:'Cinzel',serif;font-size:8px;letter-spacing:3px;color:#7a6c55;text-transform:uppercase;margin-bottom:2px}
+.quest-card.story .q-title{font-size:12px}
+.act-done{border:1px solid var(--goldb);border-radius:3px;padding:12px;font-size:12px;font-style:italic;color:#a8998a;line-height:1.55;background:var(--goldf)}
+.act-done b{display:block;font-family:'Cinzel',serif;font-style:normal;font-weight:400;font-size:11px;letter-spacing:2px;color:var(--gold);margin-bottom:4px;text-transform:uppercase}
+.act-done small{display:block;margin-top:6px;font-size:11px;color:#6a6050}
+.chron-btn{width:100%;margin:8px 0 4px;padding:9px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:var(--gold);background:transparent;border:1px solid #3a3428;border-radius:2px;cursor:pointer;transition:all .2s}
+.chron-btn:hover{border-color:var(--goldb);background:var(--goldf)}
+#story{
+display:none;position:fixed;inset:0;z-index:80;
+background:radial-gradient(ellipse at 50% 35%,#1e160ccc,#000000f2);backdrop-filter:blur(8px);
+align-items:center;justify-content:center;padding:20px;
+}
+#story.open{display:flex;animation:fadeIn .7s ease}
+.story-box{max-width:520px;width:100%;max-height:88vh;overflow-y:auto;padding:30px 30px 24px;border:1px solid var(--goldb);border-radius:6px;background:linear-gradient(180deg,#14100bf2,#0a0806f2);box-shadow:0 20px 60px #000c,0 0 40px #c8a97e14;animation:modalIn .8s cubic-bezier(.2,1,.4,1)}
+.st-kicker{font-family:'Cinzel',serif;font-size:9px;letter-spacing:5px;color:#8a7d68;text-align:center;margin-bottom:8px}
+.st-kicker:empty,.st-title:empty{display:none}
+.st-title{font-family:'Cinzel',serif;font-size:22px;color:var(--gold);text-align:center;margin-bottom:18px;text-shadow:0 0 18px var(--goldb);letter-spacing:1px}
+.st-text{font-size:16px;line-height:1.65;color:#d8cdb8;margin-bottom:14px;font-style:italic}
+.st-line{display:flex;gap:12px;align-items:flex-start;margin:14px 0 4px;padding:10px 12px;border-left:2px solid var(--rc);background:linear-gradient(90deg,color-mix(in srgb,var(--rc) 10%,transparent),transparent)}
+.st-av{width:34px;height:34px;flex:none;display:flex;align-items:center;justify-content:center}
+.st-av img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
+.st-line b{display:block;font-family:'Cinzel',serif;font-weight:400;font-size:10px;letter-spacing:1px;color:var(--rc);margin-bottom:2px}
+.st-line span{font-size:15px;line-height:1.5;color:#e8e0d0}
+.st-end{margin-top:18px;padding-top:14px;border-top:1px solid var(--goldb);text-align:center;font-family:'Cinzel',serif;font-size:11px;letter-spacing:1.5px;color:#c9b6e8;line-height:1.6}
+.st-btn{display:block;margin:22px auto 0;padding:10px 26px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:#1a1408;background:var(--gold);border:1px solid var(--gold);border-radius:2px;cursor:pointer;font-weight:600;transition:all .2s}
+.st-btn:hover{background:#e0c294}
+.chron-entry{border:1px solid #ffffff0a;border-radius:3px;margin-bottom:6px;background:#ffffff03}
+.chron-entry summary{cursor:pointer;padding:9px 12px;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.5px;color:var(--gold);list-style:none}
+.chron-entry summary::before{content:'\25B8  ';color:#7a6c55}
+.chron-entry[open] summary::before{content:'\25BE  '}
+.chron-entry > .st-text,.chron-entry > .st-line,.chron-entry > .st-end{margin-left:12px;margin-right:12px}
+.chron-entry .st-text{font-size:14px}
+.chron-next{font-size:12px;color:#8a7d68;font-style:italic;margin:10px 0 4px}
+.chron-next b{color:var(--gold);font-style:normal;font-weight:400;font-family:'Cinzel',serif;font-size:11px}
+@media(max-width:560px){.story-box{padding:22px 18px 18px}.st-title{font-size:18px}.st-text{font-size:15px}}

@@ -185,17 +185,60 @@ const HEROES = [
   { id: "rogue", name: "Ember Rogue", icon: "\u{1F56F}\u{FE0F}", class: "Assassin", atk: 12, def: 3, spd: 10, level: 1, xp: 0, xpMax: 80, special: "Ambush  -  Triple damage if enemy attacked last", rarity: "Rare" }
 ];
 const RARITY_COLOR = { Common: "#a09070", Rare: "#8a9fe8", Epic: "#c08ae8", Legendary: "#e8c07c" };
+// ACT I: THE TWELFTH KEEP  -  the story quests, completed in order.
+// Each chapter plays a scene when claimed; lines are [hero id, words].
+// Ids stay q1..q10 from the original quests so older saves keep their progress.
+const STORY_ACT = { n: "I", title: "The Twelfth Keep" };
+const PROLOGUE = {
+  title: "The Twelfth Keep",
+  text: [
+    "You wake on the cliff with ash in your mouth. Below you a keep lies broken open to the sky, and someone has scratched eleven marks into what is left of its gate.",
+    "Three strangers keep a fire in the ruin. They stand when they see you, as if they have been waiting a long time."
+  ],
+  lines: [
+    ["commander", "There you are. We'd started to think it wouldn't happen this time."],
+    ["mystic", "Don't crowd them. They never remember the first night."],
+    ["rogue", "Rebuild it, then. That's what you do. Every time."]
+  ]
+};
 const QUESTS = [
-  { id: "q1", title: "First Stones", desc: "Upgrade any building to Level 2", goal: 1, type: "upgrade_any", reward: { stone: 100, wood: 80, essence: 0 }, xp: 20 },
-  { id: "q2", title: "Raise an Army", desc: "Train 20 troops", goal: 20, type: "troops", reward: { stone: 0, wood: 0, essence: 15 }, xp: 30 },
-  { id: "q3", title: "Stone Hoards", desc: "Accumulate 500 stone", goal: 500, type: "stone", reward: { stone: 0, wood: 150, essence: 10 }, xp: 25 },
-  { id: "q4", title: "First Raid", desc: "Complete your first raid", goal: 1, type: "raids", reward: { stone: 200, wood: 150, essence: 30 }, xp: 50 },
-  { id: "q5", title: "Knowledge Seeker", desc: "Build the Void Archive", goal: 1, type: "build_archive", reward: { stone: 0, wood: 0, essence: 50 }, xp: 40 },
-  { id: "q6", title: "City Builder", desc: "Have 5 buildings built", goal: 5, type: "buildings_built", reward: { stone: 300, wood: 250, essence: 20 }, xp: 60 },
-  { id: "q7", title: "Hero's Journey", desc: "Level up any hero", goal: 1, type: "hero_level", reward: { stone: 100, wood: 100, essence: 40 }, xp: 45 },
-  { id: "q8", title: "Fortified", desc: "Upgrade Keep to Level 3", goal: 3, type: "keep_level", reward: { stone: 0, wood: 0, essence: 80 }, xp: 70 },
-  { id: "q9", title: "Into the Wastes", desc: "Complete 3 expeditions", goal: 3, type: "expeditions", reward: { stone: 150, wood: 150, essence: 30 }, xp: 40 },
-  { id: "q10", title: "Echo Hunter", desc: "Recover 3 lost echoes", goal: 3, type: "lore", reward: { stone: 0, wood: 0, essence: 100 }, xp: 80 }
+  { id: "q1", title: "The First Stone", desc: "Upgrade any building to Level 2", goal: 1, type: "upgrade_any", reward: { stone: 100, wood: 80, essence: 0 }, xp: 20,
+    scene: { text: ["The new stone settles onto the old foundation without a gap, as if it had been cut to fit. The masons go quiet. One of them makes a warding sign and won't say why."],
+      lines: [["commander", "Masons don't cut that true. Not on the first try."]] } },
+  { id: "q3", title: "The Quarry's Seal", desc: "Stockpile 500 stone", goal: 500, type: "stone", reward: { stone: 0, wood: 150, essence: 10 }, xp: 25,
+    scene: { text: ["Deep in the quarry the cutters find a seal pressed into the rock: a crown over a closed eye. It is the mark on your signet ring. There are eleven of them, each more worn than the last."],
+      lines: [["rogue", "Somebody's been signing their work. Same hand, different centuries."]] } },
+  { id: "q2", title: "The Ashen Drill", desc: "Train 20 troops", goal: 20, type: "troops", reward: { stone: 0, wood: 0, essence: 15 }, xp: 30,
+    scene: { text: ["You call the drill without thinking: three steps, shields up, the old count in a language nobody here speaks. The recruits learn it in an afternoon, as if their bodies already knew it."],
+      lines: [["commander", "That's the Ashen Rite. Only the last keep's guard knew it, and they died with it. All of them."]] } },
+  { id: "q9", title: "What the Wastes Kept", desc: "Complete 3 expeditions", goal: 3, type: "expeditions", reward: { stone: 150, wood: 150, essence: 30 }, xp: 40,
+    scene: { text: ["The scouts bring back a helmet, rusted through. It bears your crest, and a dent over the left brow. They found it on a skeleton in the Outskirts, sitting upright, facing the keep."],
+      lines: [["rogue", "Same crest. Same dent. I checked twice. I'd stop asking whose it was."]] } },
+  { id: "q4", title: "First Blood", desc: "Win your first raid", goal: 1, type: "raids", reward: { stone: 200, wood: 150, essence: 30 }, xp: 50,
+    scene: { text: ["The scavengers break and run, but not from your soldiers. They run from you, calling one word over their shoulders until it echoes off the cliff: Keeper."],
+      lines: [["mystic", "They weren't afraid. Did you hear it? They sounded relieved."]] } },
+  { id: "q7", title: "The Same Dream", desc: "Level up any hero", goal: 1, type: "hero_level", reward: { stone: 100, wood: 100, essence: 40 }, xp: 45,
+    scene: { text: ["That night every hero has the same dream: the city burning, seen from a high window. In the morning they compare it. None of them has ever stood in that tower. It hasn't been built yet."],
+      lines: [["mystic", "It's on the north edge. The Void Tower. We'll raise it within a season, and I will stand at that window and watch."]] } },
+  { id: "q6", title: "A City Again", desc: "Have 5 buildings built", goal: 5, type: "buildings_built", reward: { stone: 300, wood: 250, essence: 20 }, xp: 60,
+    scene: { text: ["Smoke from five chimneys draws travelers off the waste roads. An old woman leading a goat stops at the gate, studies your face for a long moment, and sighs. \u{201C}Back already,\u{201D} she says, and walks in as if she lives here."],
+      lines: [["commander", "She's not the first. They come back when the chimneys do. Like birds."]] } },
+  { id: "q5", title: "The Oldest Page", desc: "Build the Void Archive", goal: 1, type: "build_archive", reward: { stone: 0, wood: 0, essence: 50 }, xp: 40,
+    scene: { text: ["The Archive's shelves fill with books nobody shelved. On the oldest page, in your handwriting: If you are reading this, it happened again. Do not trust the\u{2014}", "The rest of the line has been burned away. Carefully. By someone who wanted you to know it was there."],
+      lines: [["mystic", "Ink doesn't burn that neatly. Someone came back for that one word."]] } },
+  { id: "q10", title: "Echo Hunter", desc: "Recover 3 lost echoes", goal: 3, type: "lore", reward: { stone: 0, wood: 0, essence: 100 }, xp: 80,
+    scene: { text: ["The echoes are not random. Laid side by side they make a path, each one the next step of a story someone wants you to read in order."],
+      lines: [["mystic", "The city keeps memories the way a wound keeps a splinter. It's giving them back one at a time. Gently. As if you might break."]] } },
+  { id: "q8", title: "The Twelfth Mark", desc: "Upgrade the Keep to Level 3", goal: 3, type: "keep_level", reward: { stone: 0, wood: 0, essence: 80 }, xp: 70,
+    scene: { text: ["The masons rebuild the gate and ask what to do with the old stone, the one with eleven scratches. Before you can answer, your hand is already moving. You cut the twelfth mark yourself, and it feels like finishing a sentence."],
+      lines: [["rogue", "Don't look at me like that. I'd have done it too. It's bad luck to leave a count open."]] } },
+  { id: "q11", title: "The Way Down", desc: "Reach floor 3 of any Descent", goal: 3, type: "depth", reward: { stone: 300, wood: 300, essence: 60 }, xp: 60,
+    scene: { text: ["Beneath the Outskirts the tunnels end at a door carved with crowns: eleven of them, cut by eleven different hands, and one bare space at the end of the row."],
+      lines: [["commander", "Whatever's at the bottom has been waiting for twelve rulers. Let's not keep it waiting longer."]] } },
+  { id: "q12", title: "The Rift Answers", desc: "Raise the castle to Level 5", goal: 5, type: "castle", reward: { stone: 600, wood: 500, essence: 150 }, xp: 120,
+    scene: { text: ["The Void Citadel's last stone goes up at midnight, and the crack in the sky opens like an eye. A voice comes through it, patient and warm and very old. {mystic} translates, and her hands are shaking."],
+      lines: [["mystic", "It says: Welcome back, Keeper. Shall we begin again?"]],
+      end: "Act I complete. The city remembers eleven falls. Something in the Rift remembers all twelve." } }
 ];
 // group = the enemies you fight (types are in ENEMY_TYPES, battle section)
 const RAID_ENEMIES = [
@@ -356,6 +399,7 @@ let S = {
   dailyDay: 1,
   dailyClaimed: false,
   upgradesTotal: 0,
+  story: { prologue: false },
   gear: { bag: [], next: 1 }, // unequipped gear (equipped pieces live on each hero)
   tally: {}, // lifetime counters for bounties; never reset, not even by rebirth
   bounties: { day: "", daily: [], week: "", weekly: [], rerolls: 1, dailyBonus: false, weeklyBonus: false }
@@ -2154,6 +2198,8 @@ function getQuestProgress(q) {
     case "keep_level": return Math.min(S.buildings.keep.level, q.goal);
     case "expeditions": return Math.min(S.expeditions || 0, q.goal);
     case "lore": return Math.min((S.lore || []).length, q.goal);
+    case "depth": return Math.min(S.bestDepth || 0, q.goal);
+    case "castle": return Math.min(S.castleLevel || 1, q.goal);
     default: return 0;
   }
 }
@@ -2161,44 +2207,45 @@ function updateQuestProgress(type, val) {
   QUESTS.forEach((q) => {
     if (q.type === type) S.quests[q.id].progress = Math.min(val, q.goal);
   });
-  const ready = QUESTS.filter((q) => getQuestProgress(q) >= q.goal && !S.quests[q.id].claimed).length + bountiesReady();
+  const cur = currentChapter();
+  const ready = (cur && getQuestProgress(cur) >= cur.goal ? 1 : 0) + bountiesReady();
   const badge = $("quest-badge");
   if (badge) badge.style.display = ready > 0 ? "inline-block" : "none";
   if (currentTab === "quests") refreshPanel();
 }
+// the story is told one chapter at a time: the first unclaimed quest
+const currentChapter = () => QUESTS.find((q) => !S.quests[q.id].claimed) || null;
+const chaptersDone = () => QUESTS.filter((q) => S.quests[q.id].claimed).length;
 function renderQuests(c) {
-  // claimable first, active next, claimed last
-  const rank = (q) => (S.quests[q.id].claimed ? 2 : getQuestProgress(q) >= q.goal ? 0 : 1);
-  const list = [...QUESTS].sort((a, b) => rank(a) - rank(b)).filter((q) => !S.quests[q.id].claimed);
-  const doneCount = QUESTS.length - list.length;
-  let html = bountiesHtml() + `<div class="section-label">Story Quests${doneCount ? `  -  ${doneCount}/${QUESTS.length} complete` : ""}</div>`;
-  if (!list.length) html += `<div class="q-alldone">Every story quest is complete. The bounty board keeps the work coming.</div>`;
-  list.forEach((q) => {
+  const q = currentChapter();
+  const done = chaptersDone();
+  let html = `<div class="section-label b-head">Act ${STORY_ACT.n}  -  ${STORY_ACT.title} <span>${done}/${QUESTS.length}</span></div>`;
+  html += `<div class="story-track">${QUESTS.map((x, i) => `<i class="${S.quests[x.id].claimed ? "on" : x === q ? "cur" : ""}" title="Chapter ${i + 1}"></i>`).join("")}</div>`;
+  if (q) {
     const prog = getQuestProgress(q);
-    const done = prog >= q.goal;
-    const claimed = S.quests[q.id].claimed;
-    const pct = Math.min(100, (prog / q.goal) * 100);
+    const ready = prog >= q.goal;
     const rewardStr = Object.entries(q.reward).filter(([, v]) => v > 0).map(([k, v]) => `+${v} ${k}`).join(", ");
     html += `
-      <div class="quest-card ${done && !claimed ? "complete" : ""} ${claimed ? "claimed" : ""}" data-quest="${q.id}" ${done && !claimed ? `onclick="claimQuest('${q.id}', this)"` : ""}>
+      <div class="quest-card story ${ready ? "complete" : ""}" data-quest="${q.id}" ${ready ? `onclick="claimQuest('${q.id}', this)"` : ""}>
+        <div class="q-chapter">Chapter ${QUESTS.indexOf(q) + 1}</div>
         <div class="q-title">${q.title}</div>
         <div class="q-desc">${q.desc}</div>
-        <div class="q-progress"><div class="q-fill" style="width:${pct}%"></div></div>
+        <div class="q-progress"><div class="q-fill" style="width:${Math.min(100, (prog / q.goal) * 100)}%"></div></div>
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span style="font-size:10px;color:#666" data-q-count>${prog}/${q.goal}</span>
-          ${claimed
-            ? `<span style="font-size:10px;color:var(--green)">\u{2713} Claimed</span>`
-            : done
-            ? `<button class="q-claim">CLAIM +${q.xp}XP</button>`
-            : `<span class="q-reward">${rewardStr}</span>`}
+          ${ready ? `<button class="q-claim">READ ON +${q.xp}XP</button>` : `<span class="q-reward">${rewardStr}</span>`}
         </div>
       </div>`;
-  });
+  } else {
+    html += `<div class="act-done"><b>Act ${STORY_ACT.n} complete</b>The city remembers eleven falls. Something in the Rift remembers all twelve.<small>Act II: The Remembered Dead is still being written. Until then, the Far Reach, the Descents and the Altar of Memory are yours.</small></div>`;
+  }
+  html += `<button class="chron-btn" onclick="openChronicle()">\u{1F4DC} Read the Chronicle</button><div class="divider"></div>`;
+  html += bountiesHtml().replace(/<div class="divider"><\/div>\s*$/, "");
   setPanel(c, html);
 }
 function claimQuest(qid, el) {
   const q = QUESTS.find((x) => x.id === qid);
-  if (!q || S.quests[qid].claimed || getQuestProgress(q) < q.goal) return;
+  if (!q || q !== currentChapter() || getQuestProgress(q) < q.goal) return;
   S.quests[qid].claimed = true;
   if (el) {
     burstAt(el, "#7aca8a", 18);
@@ -2208,9 +2255,11 @@ function claimQuest(qid, el) {
     if (S.res[k] !== undefined && v > 0) addCapped(S.res, k, v);
   });
   addHeroXP(S.selectedHero, q.xp);
-  notify(`Quest complete! ${Object.entries(q.reward).filter(([, v]) => v > 0).map(([k, v]) => `+${v} ${k}`).join(", ")}`, "reward");
+  notify(`Chapter complete! ${Object.entries(q.reward).filter(([, v]) => v > 0).map(([k, v]) => `+${v} ${k}`).join(", ")}`, "reward");
   updateQuestProgress("", 0);
   renderPanel();
+  saveGame(true);
+  setTimeout(() => showStory(q), 500);
 }
 // ==============================================================
 // HEROES
@@ -6017,7 +6066,7 @@ function confirmForge() {
     F = null;
     renderPanel();
     notify(`${S.heroes[i].name} rises to lead the party.`, "reward", 4500);
-    if (!S.dailyClaimed) setTimeout(() => openDaily(), 800);
+    setTimeout(() => showPrologue(() => !S.dailyClaimed && openDaily()), 700);
   }, 700);
 }
 // the champion always walks first
@@ -6623,6 +6672,71 @@ function rerollBounty(i) {
   renderPanel();
 }
 // ==============================================================
+// STORY SCENES & THE CHRONICLE
+// ==============================================================
+let storyAfter = null;
+function speakerHtml([id, words]) {
+  const h = S.heroes.find((x) => x.id === id);
+  if (!h) return "";
+  return `<div class="st-line" style="--rc:${RARITY_COLOR[h.rarity] || "#8a9fe8"}">
+    <div class="st-av">${heroSprite(h)}</div>
+    <div><b>${h.name}</b><span>\u{201C}${words}\u{201D}</span></div>
+  </div>`;
+}
+// {commander}, {mystic}, {rogue} in story text become the heroes' current names
+const heroNames = (t) => t.replace(/\{(commander|mystic|rogue)\}/g, (_, id) => (S.heroes.find((h) => h.id === id) || {}).name || id);
+function sceneHtml(kicker, title, sc) {
+  return `<div class="st-kicker">${kicker}</div>
+    <div class="st-title">${title}</div>
+    ${sc.text.map((t) => `<p class="st-text">${heroNames(t)}</p>`).join("")}
+    ${(sc.lines || []).map(speakerHtml).join("")}
+    ${sc.end ? `<div class="st-end">${sc.end}</div>` : ""}`;
+}
+function openStory(html, after, btn = "Continue") {
+  storyAfter = after || null;
+  $("story-box").innerHTML = html + `<button class="st-btn" onclick="closeStory()">${btn} \u{2192}</button>`;
+  $("story").classList.add("open");
+  $("story-box").scrollTop = 0;
+}
+function closeStory() {
+  $("story").classList.remove("open");
+  const f = storyAfter;
+  storyAfter = null;
+  if (f) f();
+}
+function showPrologue(after) {
+  S.story.prologue = true;
+  saveGame(true);
+  openStory(sceneHtml(`ACT ${STORY_ACT.n}  -  PROLOGUE`, PROLOGUE.title, PROLOGUE), after, "Begin");
+}
+function showStory(q) {
+  const n = QUESTS.indexOf(q) + 1;
+  const last = n === QUESTS.length;
+  openStory(sceneHtml(`ACT ${STORY_ACT.n}  -  CHAPTER ${n}`, q.title, q.scene), null, last ? "The story continues" : "Continue");
+  burst(window.innerWidth / 2, window.innerHeight * 0.3, last ? "#c9b6e8" : "#c8a97e", last ? 40 : 18);
+}
+// every scene read so far, in order, to revisit at any time
+function openChronicle() {
+  const read = QUESTS.filter((q) => S.quests[q.id].claimed);
+  const next = currentChapter();
+  const box = $("modal-box");
+  box.style.setProperty("--bc", "#c8a97e");
+  box.innerHTML = `
+    <div class="modal-head">
+      <div class="modal-icon">\u{1F4DC}</div>
+      <div>
+        <div class="modal-title">The Chronicle</div>
+        <div class="modal-sub">Act ${STORY_ACT.n}: ${STORY_ACT.title}  -  ${read.length}/${QUESTS.length} chapters  -  ${S.lore.length}/${LORE.length} echoes</div>
+      </div>
+    </div>
+    <details class="chron-entry" ${read.length ? "" : "open"}><summary>Prologue  -  ${PROLOGUE.title}</summary>${sceneHtml("", "", PROLOGUE)}</details>
+    ${read.map((q) => `<details class="chron-entry"><summary>Chapter ${QUESTS.indexOf(q) + 1}  -  ${q.title}</summary>${sceneHtml("", "", q.scene)}</details>`).join("")}
+    ${next ? `<div class="chron-next">Next: <b>${next.title}</b>  -  ${next.desc}</div>` : ""}
+    ${S.lore.length ? `<div class="section-label" style="margin-top:14px">Recovered Echoes</div>${LORE.filter((_, i) => S.lore.includes(i)).map((t) => `<div class="echo found">\u{201C}${t}\u{201D}</div>`).join("")}` : ""}
+    <div class="modal-actions"><button class="mbtn mbtn-ghost" onclick="closeModal()">\u{2715} Close</button></div>`;
+  $("modal").classList.add("open");
+}
+// ==============================================================
 // NOTIFICATIONS
 // ==============================================================
 const NOTIF_ICON = { success: "\u{2713}", error: "\u{2715}", info: "\u{25C6}", reward: "\u{2726}" };
@@ -6795,7 +6909,9 @@ function closeSplash() {
     } else {
       notify("Tap any building to upgrade! Send heroes out from the Explore tab.", "info", 4500);
     }
-    if (!S.dailyClaimed) setTimeout(() => openDaily(), 600);
+    // saves from before the story still get the prologue, once
+    if (!S.story.prologue) setTimeout(() => showPrologue(() => !S.dailyClaimed && openDaily()), 600);
+    else if (!S.dailyClaimed) setTimeout(() => openDaily(), 600);
   }, 650);
 }
 // ==============================================================
@@ -6859,8 +6975,8 @@ function renderAltar() {
     ${L < 6
       ? `<div class="altar-note">The city must stand at Castle Lv 6 before it can fall and remember. (Now Lv ${L}.)</div>`
       : `<div class="altar-note">Let the city fall and rise again as a <b>Ruined Keep</b>. You earn <b class="gold">\u{2728} ${gain} Memory Shards</b>.
-          <ul><li><b>Resets:</b> buildings, castle level, stone, wood, essence, troops, quests, the ruins' chests.</li>
-          <li><b>Stays:</b> heroes and their levels, items, research, relics, gold, lore, Memories, your deepest Descent.</li></ul>
+          <ul><li><b>Resets:</b> buildings, castle level, stone, wood, essence, troops, the ruins' chests.</li>
+          <li><b>Stays:</b> heroes, their levels and gear, items, research, relics, gold, lore, the story so far, Memories, your deepest Descent.</li></ul>
           <small>More shards for a higher castle, more building levels, and deeper Endless Descents.</small></div>
         <button class="mbtn ${altarConfirm ? "mbtn-danger" : "mbtn-gold"} altar-go" onclick="rebirthPress()">${altarConfirm ? "Tap again to let it fall" : `\u{1F56F}\u{FE0F} Let the city fall  (+${gain} shards)`}</button>`}
     <div class="modal-actions"><button class="mbtn mbtn-ghost" onclick="closeModal()">\u{2715} Close</button></div>`;
@@ -6907,7 +7023,7 @@ function rebirth() {
   S.upgradesTotal = 0;
   S.raids = 0;
   S.expeditions = 0;
-  QUESTS.forEach((q) => (S.quests[q.id] = { progress: 0, claimed: false }));
+  // the story is remembered across lives: chapters stay read
   S.world = { opened: [], keys: {} };
   S.selectedBuilding = null;
   closeModal();

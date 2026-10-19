@@ -355,7 +355,10 @@ let S = {
   raids: 0,
   dailyDay: 1,
   dailyClaimed: false,
-  upgradesTotal: 0
+  upgradesTotal: 0,
+  gear: { bag: [], next: 1 }, // unequipped gear (equipped pieces live on each hero)
+  tally: {}, // lifetime counters for bounties; never reset, not even by rebirth
+  bounties: { day: "", daily: [], week: "", weekly: [], rerolls: 1, dailyBonus: false, weeklyBonus: false }
 };
 BDATA.forEach((b) => {
   S.buildings[b.id] = { level: 0, upgrading: false, timer: 0, timerMax: 0 };
@@ -366,7 +369,10 @@ S.totalLevels = 2;
 QUESTS.forEach((q) => {
   S.quests[q.id] = { progress: 0, claimed: false };
 });
-S.heroes.forEach((h) => (h.exp = null));
+S.heroes.forEach((h) => {
+  h.exp = null;
+  h.gear = { weapon: null, armor: null, charm: null };
+});
 // older saves don't have the expedition fields yet
 function migrateSave() {
   if (S.res.relics === undefined) S.res.relics = 0;
@@ -1290,6 +1296,7 @@ setInterval(() => {
       bs.level++;
       S.totalLevels++;
       S.upgradesTotal++;
+      addTally("upgrades");
       notify(`${b.name} upgraded to Lv.${bs.level}!`, "success");
       const tile = document.querySelector(`#bmap [data-id="${b.id}"]`);
       burstAt(tile, b.color, 22);
@@ -1305,6 +1312,7 @@ setInterval(() => {
   renderBmap();
   updateCP();
   tickExpeditions();
+  refreshBounties();
   refreshPanel();
   S.lastSeen = Date.now();
 }, 1000);
@@ -1349,6 +1357,7 @@ function processOffline(sec) {
       bs.level++;
       S.totalLevels++;
       S.upgradesTotal++;
+      addTally("upgrades");
       finished.push(b.name);
     }
   });
@@ -1488,13 +1497,11 @@ function updateCP() {
 // ==============================================================
 // BUILDING MODAL
 // ==============================================================
-let modalBuildingId = null;
 function openBuildingModal(id) {
   const b = BDATA.find((x) => x.id === id);
   const bs = S.buildings[id];
   if (!b) return;
   S.selectedBuilding = id;
-  modalBuildingId = id;
   const built = bs.level > 0;
   const maxed = bs.level >= bMax(b);
   const nextLv = bs.level + 1;
@@ -1544,6 +1551,7 @@ function openBuildingModal(id) {
     <div class="section-label">Requirements</div>
     ${reqHtml}
     ${id === "archive" ? researchHtml() : ""}
+    ${id === "forge" ? forgeWorkshopHtml() : ""}
     <div class="modal-actions">
       <button class="mbtn ${canAfford && !maxed && !bs.upgrading ? "mbtn-gold" : "mbtn-ghost"}" id="modal-upg-btn" ${maxed || bs.upgrading || !canAfford ? "disabled" : ""} onclick="doUpgrade('${id}')">${maxed ? "\u{2713} Maxed" : bs.upgrading ? "\u{23F3} Upgrading" : btnLabel}</button>
       <button class="mbtn mbtn-ghost" onclick="closeModal()">\u{2715} Close</button>
@@ -1647,9 +1655,9 @@ function renderPanel() {
 // tap never lands on a button that's being swapped out mid-press.
 let panelSig = "";
 function panelState() {
-  const heroes = S.heroes.map((h) => [h.name, h.level, h.xp, h.atk, h.def, h.spd, h.exp ? h.exp.region + (h.exp.done ? "!" : "") : ""].join(":")).join(",");
+  const heroes = S.heroes.map((h) => [h.name, h.level, h.xp, h.atk, h.def, h.spd, h.exp ? h.exp.region + (h.exp.done ? "!" : "") : "", gearSig(h)].join(":")).join(",");
   const base = [currentTab, S.castleLevel, S.selectedHero, heroes].join("|");
-  if (currentTab === "quests") return base + "|" + QUESTS.map((q) => (S.quests[q.id].claimed ? "c" : getQuestProgress(q) >= q.goal ? "d" : "a")).join("");
+  if (currentTab === "quests") return base + "|" + bountySig() + "|" + QUESTS.map((q) => (S.quests[q.id].claimed ? "c" : getQuestProgress(q) >= q.goal ? "d" : "a")).join("");
   if (currentTab === "raid") return base + "|" + JSON.stringify(S.items) + "|" + RAID_MIN_TROOPS.map((m) => (Math.floor(S.res.troops) >= m ? 1 : 0)).join("");
   if (currentTab === "explore") return base + "|" + S.lore.length;
   return base;
@@ -1659,7 +1667,8 @@ function setText(el, txt) {
 }
 function patchPanel() {
   const c = $("panel-content");
-  if (currentTab === "quests")
+  if (currentTab === "quests") {
+    patchBounties(c);
     c.querySelectorAll("[data-quest]").forEach((card) => {
       const q = QUESTS.find((x) => x.id === card.dataset.quest);
       if (!q) return;
@@ -1669,7 +1678,7 @@ function patchPanel() {
       if (fill && fill.style.width !== w) fill.style.width = w;
       setText(card.querySelector("[data-q-count]"), `${prog}/${q.goal}`);
     });
-  else if (currentTab === "raid") setText(c.querySelector("[data-troops]"), String(Math.floor(S.res.troops)));
+  } else if (currentTab === "raid") setText(c.querySelector("[data-troops]"), String(Math.floor(S.res.troops)));
 }
 function refreshPanel() {
   if (panelState() !== panelSig) renderPanel();
@@ -1697,7 +1706,7 @@ function updateQuestProgress(type, val) {
   QUESTS.forEach((q) => {
     if (q.type === type) S.quests[q.id].progress = Math.min(val, q.goal);
   });
-  const ready = QUESTS.filter((q) => getQuestProgress(q) >= q.goal && !S.quests[q.id].claimed).length;
+  const ready = QUESTS.filter((q) => getQuestProgress(q) >= q.goal && !S.quests[q.id].claimed).length + bountiesReady();
   const badge = $("quest-badge");
   if (badge) badge.style.display = ready > 0 ? "inline-block" : "none";
   if (currentTab === "quests") refreshPanel();
@@ -1705,8 +1714,10 @@ function updateQuestProgress(type, val) {
 function renderQuests(c) {
   // claimable first, active next, claimed last
   const rank = (q) => (S.quests[q.id].claimed ? 2 : getQuestProgress(q) >= q.goal ? 0 : 1);
-  const list = [...QUESTS].sort((a, b) => rank(a) - rank(b));
-  let html = '<div class="section-label">Active Quests</div>';
+  const list = [...QUESTS].sort((a, b) => rank(a) - rank(b)).filter((q) => !S.quests[q.id].claimed);
+  const doneCount = QUESTS.length - list.length;
+  let html = bountiesHtml() + `<div class="section-label">Story Quests${doneCount ? `  -  ${doneCount}/${QUESTS.length} complete` : ""}</div>`;
+  if (!list.length) html += `<div class="q-alldone">Every story quest is complete. The bounty board keeps the work coming.</div>`;
   list.forEach((q) => {
     const prog = getQuestProgress(q);
     const done = prog >= q.goal;
@@ -1739,7 +1750,7 @@ function claimQuest(qid, el) {
     floatText(el, `+${q.xp} XP`, "void");
   }
   Object.entries(q.reward).forEach(([k, v]) => {
-    if (S.res[k] !== undefined) S.res[k] += v;
+    if (S.res[k] !== undefined && v > 0) addCapped(S.res, k, v);
   });
   addHeroXP(S.selectedHero, q.xp);
   notify(`Quest complete! ${Object.entries(q.reward).filter(([, v]) => v > 0).map(([k, v]) => `+${v} ${k}`).join(", ")}`, "reward");
@@ -1780,11 +1791,7 @@ function renderHeroes(c) {
                 ? `\u{2728} Back from ${regionById(h.exp.region).name}  -  collect in Explore`
                 : `\u{1F9ED} Exploring ${regionById(h.exp.region).name}  -  <span data-exp-t="${i}"></span>`}</div>`
             : ""}
-          <div class="hero-stats">
-            <div class="hstat">ATK <span>${h.atk}</span></div>
-            <div class="hstat">DEF <span>${h.def}</span></div>
-            <div class="hstat">SPD <span>${h.spd}</span></div>
-          </div>
+          <div class="hero-stats">${heroStatChips(h)}</div>
           <div class="hero-xp-bar"><div class="hero-xp-fill" style="width:${xpPct}%"></div></div>
           <div style="font-size:9px;color:#555;margin-top:2px">XP ${h.xp}/${h.xpMax}</div>
         </div>
@@ -1793,11 +1800,12 @@ function renderHeroes(c) {
   const sel = S.heroes[S.selectedHero];
   html += `
     <div class="divider"></div>
+    ${equipmentHtml(S.selectedHero)}
     <div class="section-label">Skills  -  ${sel.name}</div>
     ${(SKILLS[sel.id] || [])
       .map((s) => `<div class="skill-row"><div><b>${s.name}</b><span>${s.mp} MP</span></div>${s.desc}</div>`)
       .join("")}
-    <div class="skill-hint">The highlighted hero receives quest and daily-reward XP.</div>`;
+    <div class="skill-hint">The highlighted hero receives quest and daily-reward XP. Tap a hero to manage their gear.</div>`;
   setPanel(c, html);
   updateExpTimers();
 }
@@ -1903,6 +1911,7 @@ function collectExpedition(i, el) {
   if (res.draught) S.items.draught = (S.items.draught || 0) + 1;
   h.exp = null;
   S.expeditions++;
+  addTally("expeditions");
   burstAt(el, r.color, 22);
   floatText(el, `+${res.xp} XP`, "void");
   addHeroXP(i, res.xp);
@@ -2074,12 +2083,14 @@ function heroBattleStats(h) {
   const fl = bLevel("forge");
   const forge = fl > 0 ? 3 + Math.max(0, fl - 3) * 2 : 0;
   const pw = heroPower(); // Hall of Ancestors + Veteran's Echo
+  const g = gearStats(h);
   return {
-    hp: Math.round((70 + h.level * 12 + (h.vit || 0) * 6) * (1 + 0.08 * rank("hardy")) * pw),
-    mp: (h.id === "mystic" ? 16 : 10) + h.level * 2 + 2 * rank("wells") + (h.mpBonus || 0),
-    atk: Math.round((h.atk + forge) * pw),
-    def: h.def,
-    spd: h.spd
+    hp: Math.round((70 + h.level * 12 + (h.vit || 0) * 6 + g.hp) * (1 + 0.08 * rank("hardy")) * pw),
+    mp: (h.id === "mystic" ? 16 : 10) + h.level * 2 + 2 * rank("wells") + (h.mpBonus || 0) + g.mp,
+    atk: Math.round((h.atk + forge + g.atk) * pw),
+    def: h.def + g.def,
+    spd: h.spd + g.spd,
+    perks: g.perks
   };
 }
 function startRaid(idx) {
@@ -2111,7 +2122,7 @@ function startBattle(o) {
     return {
       uid: "h" + i, side: "hero", hi: i, id: h.id, name: h.name, icon: h.icon,
       hp, maxHp: st.hp, mp, maxMp: st.mp, atk: st.atk, def: st.def, spd: st.spd,
-      guard: false, ko: hp <= 0, sp: 1, noGain: false
+      guard: false, ko: hp <= 0, sp: st.perks.includes("surge") ? 2 : 1, noGain: false, perks: st.perks
     };
   });
   const counts = {}, seen = {};
@@ -2233,6 +2244,7 @@ function dmgCalc(att, target, mult = 1, pierce = false) {
     }
   } else if (hasBoon("stoneskin")) d = Math.max(1, Math.round(d * 0.85));
   if (target.side === "hero") {
+    if (target.perks && target.perks.includes("bulwark")) d = Math.ceil(d * 0.85);
     if (target.guard) d = Math.ceil(d / 2);
     if (B.shieldWall) d = Math.ceil(d / 2);
     d = Math.max(1, Math.floor(d / B.wallBonus));
@@ -2265,6 +2277,7 @@ function strike(att, t, mult, type, pierce = false) {
   return d;
 }
 function breakEnemy(t) {
+  addTally("breaks");
   t.broken = true;
   t.brokenUntil = B.round + 1;
   B.queue = B.queue.filter((uid) => uid !== t.uid);
@@ -2386,6 +2399,7 @@ function pickTarget(uid) {
     if (n) announce(`${hits}-Hit Attack`);
     B.log.push(`${DMG_TYPES[type].icon} ${h.name} hits ${u.name}${hits > 1 ? ` ${hits} times` : ""} for ${total}.`);
     if (hasBoon("thirst")) h.mp = Math.min(h.maxMp, h.mp + 1);
+    if (h.perks && h.perks.includes("lifesteal") && total > 0) healUnit(h, Math.max(1, Math.round(total * 0.15)));
   } else if (p.kind === "skill") {
     runSkill(h, p.skill, u);
     return;
@@ -2531,8 +2545,13 @@ function finishBattle(won) {
     B.heroes.forEach((u) => addHeroXP(u.hi, Math.round(o.xpReward * (u.ko ? 0.5 : 1) * xpMul)));
     if (o.kind === "raid") {
       S.raids++;
+      addTally("raids");
       updateQuestProgress("raids", S.raids);
     }
+    addTally("wins");
+    if (o.kind === "boss" || (o.kind === "descent" && /^(BOSS|DEPTH)/.test(o.title))) addTally("bosses");
+    const drop = battleGearDrop(o);
+    if (drop) gains.push(`${GEAR_SLOTS[drop.slot].icon} ${drop.name}`);
     B.log.push(`\u{2728} VICTORY!`);
   } else {
     B.log.push(o.kind === "raid" ? `\u{1F480} The party is defeated and retreats to the keep.` : `\u{1F480} The party collapses...`);
@@ -4424,6 +4443,7 @@ function beginDescent() {
 }
 function advance(text) {
   D.floor++;
+  addTally("floors");
   D.log = text;
   D.phase = "choose";
   D.node = null;
@@ -4633,6 +4653,7 @@ function extractDescent(goHome = true) {
 }
 function descentVictory() {
   D.floor++;
+  addTally("floors");
   S.descents = (S.descents || 0) + 1;
   S.bestDepth = Math.max(S.bestDepth || 0, D.floor);
   D.phase = "won";
@@ -5625,14 +5646,526 @@ function claimDaily() {
   burstAt(document.querySelector(".reward-day.today"), "#c8a97e", 26);
   Object.entries(reward.grant).forEach(([k, v]) => {
     if (k === "heroXp") addHeroXP(S.selectedHero, 100);
-    else if (S.res[k] !== undefined) S.res[k] += v;
+    else if (S.res[k] !== undefined) addCapped(S.res, k, v);
   });
   S.dailyClaimed = true;
   S.dailyDate = new Date().toDateString();
-  if (S.dailyDay < 7) S.dailyDay++;
-  notify(`Day ${S.dailyDay - 1} reward: ${reward.label}`, "reward");
+  const claimedDay = S.dailyDay;
+  S.dailyDay = (S.dailyDay % DAILY_REWARDS.length) + 1; // the week of rewards starts over after day 7
+  notify(`Day ${claimedDay} reward: ${reward.label}`, "reward");
   setTimeout(closeDaily, 450);
   renderBmap();
+}
+// ==============================================================
+// GEAR & THE IRON FORGE
+//   Every hero has three slots: weapon, armor and charm. Gear is
+//   forged at the Iron Forge (the rarity is rolled; the Forge's level
+//   improves the odds) or dropped by raids, elites and bosses.
+//   Item power follows the castle tier, so gear forged in a bigger
+//   city is stronger. Unwanted pieces are salvaged for relics and
+//   essence. Gear and heroes survive an Echo Rebirth.
+// ==============================================================
+const GEAR_SLOTS = {
+  weapon: { name: "Weapon", icon: "\u{1F5E1}\u{FE0F}", bases: ["Blade", "Spear", "War Axe", "Rod", "Dagger", "Glaive"], main: "atk" },
+  armor: { name: "Armor", icon: "\u{1F6E1}\u{FE0F}", bases: ["Mail", "Cuirass", "Mantle", "Brigandine", "Robes"], main: "def" },
+  charm: { name: "Charm", icon: "\u{1F4FF}", bases: ["Amulet", "Sigil", "Locket", "Talisman", "Bell"], main: "mp" }
+};
+const GEAR_SLOT_IDS = Object.keys(GEAR_SLOTS);
+const RARITIES = ["Common", "Rare", "Epic", "Legendary"];
+const RARITY_MULT = { Common: 1, Rare: 1.35, Epic: 1.75, Legendary: 2.3 };
+const RARITY_AFFIXES = { Common: 0, Rare: 1, Epic: 2, Legendary: 2 };
+const RARITY_SALVAGE = { Common: 1, Rare: 3, Epic: 8, Legendary: 20 };
+const GEAR_PREFIX = {
+  Common: ["Worn", "Plain", "Iron", "Scavenged"],
+  Rare: ["Tempered", "Ashen", "Keen", "Wardbound"],
+  Epic: ["Voidtouched", "Emberforged", "Runed", "Starfallen"]
+};
+// legendaries carry a named perk; each perk lives in one slot
+const LEGENDARIES = {
+  weapon: { perk: "lifesteal", names: ["Cinderfang", "The Last Keep's Edge", "Hollow Tooth"] },
+  armor: { perk: "bulwark", names: ["Mantle of Eleven Keeps", "The Wall Remembers", "Ashen Aegis"] },
+  charm: { perk: "surge", names: ["Bell of the Drowned", "The First Crown's Eye", "Echo in Amber"] }
+};
+const PERKS = {
+  lifesteal: { name: "Bloodecho", desc: "Basic attacks heal 15% of the damage they deal" },
+  bulwark: { name: "Bulwark", desc: "Takes 15% less damage" },
+  surge: { name: "Quickened", desc: "Starts every battle with +1 Surge" }
+};
+const STAT_LABEL = { atk: "ATK", def: "DEF", hp: "HP", mp: "MP", spd: "SPD" };
+const GEAR_BAG_MAX = 24;
+const emptyGearStats = () => ({ atk: 0, def: 0, hp: 0, mp: 0, spd: 0, perks: [] });
+function gearStats(h) {
+  const g = emptyGearStats();
+  if (!h || !h.gear) return g;
+  GEAR_SLOT_IDS.forEach((slot) => {
+    const it = h.gear[slot];
+    if (!it) return;
+    Object.entries(it.stats || {}).forEach(([k, v]) => (g[k] = (g[k] || 0) + v));
+    if (it.perk && !g.perks.includes(it.perk)) g.perks.push(it.perk);
+  });
+  return g;
+}
+const gearSig = (h) => (h.gear ? GEAR_SLOT_IDS.map((s) => (h.gear[s] ? h.gear[s].id : 0)).join(".") : "") + "/" + S.gear.bag.length;
+// the main stat a slot always rolls, scaled by item level and rarity
+function mainStats(slot, ilvl, rm) {
+  if (slot === "weapon") return { atk: Math.round((1 + ilvl * 0.8) * rm) };
+  if (slot === "armor") return { def: Math.round((1 + ilvl * 0.6) * rm), hp: Math.round((6 + ilvl * 5) * rm) };
+  return { mp: Math.round((2 + ilvl * 0.9) * rm), hp: Math.round((3 + ilvl * 2) * rm) };
+}
+// one extra stat per affix: never the slot's main stat
+function rollAffix(slot, ilvl, rm, taken = []) {
+  const pool = ["atk", "def", "hp", "mp", "spd"].filter((k) => k !== GEAR_SLOTS[slot].main && !taken.includes(k));
+  const k = pool[rand(0, pool.length - 1)];
+  const v = { atk: 0.5 + ilvl * 0.35, def: 0.5 + ilvl * 0.35, hp: 4 + ilvl * 3, mp: 1 + ilvl * 0.6, spd: 1 + ilvl * 0.15 }[k];
+  return [k, Math.max(1, Math.round(v * rm * (0.7 + Math.random() * 0.5)))];
+}
+function makeGear(slot, rarity, ilvl) {
+  const rm = RARITY_MULT[rarity];
+  const stats = mainStats(slot, ilvl, rm);
+  const taken = [];
+  for (let i = 0; i < RARITY_AFFIXES[rarity]; i++) {
+    const [k, v] = rollAffix(slot, ilvl, rm, taken);
+    taken.push(k);
+    stats[k] = (stats[k] || 0) + v;
+  }
+  const base = GEAR_SLOTS[slot].bases[rand(0, GEAR_SLOTS[slot].bases.length - 1)];
+  const leg = rarity === "Legendary" ? LEGENDARIES[slot] : null;
+  const name = leg ? leg.names[rand(0, leg.names.length - 1)] : `${pick(GEAR_PREFIX[rarity])} ${base}`;
+  return { id: S.gear.next++, slot, rarity, ilvl, name, stats, perk: leg ? leg.perk : null };
+}
+// item level: castle tier, +1 per Forge level past the first
+const gearLevel = () => castleTier() + Math.max(0, bLevel("forge") - 1);
+function rarityOdds(forgeLv) {
+  if (forgeLv <= 1) return [["Common", 60], ["Rare", 32], ["Epic", 8], ["Legendary", 0]];
+  if (forgeLv === 2) return [["Common", 45], ["Rare", 38], ["Epic", 15], ["Legendary", 2]];
+  return [["Common", 30], ["Rare", 40], ["Epic", 24], ["Legendary", 6 + (forgeLv - 3) * 2]];
+}
+// a rarity floor lifts anything rolled below it
+function rollRarity(odds, floor = "Common") {
+  const r = pickWeighted(odds);
+  return RARITIES.indexOf(r) < RARITIES.indexOf(floor) ? floor : r;
+}
+function gearStatLine(it) {
+  return Object.entries(it.stats).filter(([, v]) => v).map(([k, v]) => `+${v} ${STAT_LABEL[k]}`).join("  ");
+}
+function gearPower(it) {
+  if (!it) return 0;
+  const w = { atk: 3, def: 3, hp: 0.4, mp: 1, spd: 4 };
+  return Math.round(Object.entries(it.stats).reduce((a, [k, v]) => a + v * (w[k] || 1), 0) + (it.perk ? 12 : 0));
+}
+function gearHtml(it, extra = "") {
+  const rc = RARITY_COLOR[it.rarity];
+  return `<div class="gear-item" style="--rc:${rc}">
+    <div class="gear-ic">${GEAR_SLOTS[it.slot].icon}</div>
+    <div class="gear-info">
+      <div class="gear-name">${it.name} <span class="gear-ilvl">iLv ${it.ilvl}</span></div>
+      <div class="gear-rar">${it.rarity}  -  ${GEAR_SLOTS[it.slot].name}</div>
+      <div class="gear-stats">${gearStatLine(it)}</div>
+      ${it.perk ? `<div class="gear-perk">\u{2726} ${PERKS[it.perk].name}: ${PERKS[it.perk].desc}</div>` : ""}
+    </div>
+    ${extra}
+  </div>`;
+}
+// adds gear to the Armory; a full Armory salvages it on the spot
+function giveGear(it, quiet) {
+  if (S.gear.bag.length >= GEAR_BAG_MAX) {
+    const got = salvageValue(it);
+    addCapped(S.res, "relics", got.relics);
+    addCapped(S.res, "essence", got.essence);
+    if (!quiet) notify(`Armory full: ${it.name} salvaged for ${got.relics} relics.`, "info", 4000);
+    return it;
+  }
+  S.gear.bag.push(it);
+  if (!quiet) notify(`${GEAR_SLOTS[it.slot].icon} New gear: ${it.name} (${it.rarity})`, "reward", 4000);
+  return it;
+}
+// combat drops: bosses always drop, elites and raids sometimes
+function battleGearDrop(o) {
+  let chance = 0.08, floor = "Common";
+  if (o.kind === "raid") chance = 0.2 + 0.1 * Math.max(0, RAID_ENEMIES.findIndex((e) => e.name === o.name));
+  else if (o.kind === "boss") (chance = 1), (floor = "Rare");
+  else if (o.kind === "descent") {
+    if (/^BOSS/.test(o.title)) (chance = 1), (floor = (o.scale || 1) >= 1.5 ? "Epic" : "Rare");
+    else if (/^DEPTH/.test(o.title)) (chance = 0.6), (floor = "Rare");
+    else if (/elite/i.test(o.intro || "")) chance = 0.35;
+    else chance = 0.08;
+  }
+  if (Math.random() >= chance) return null;
+  const slot = GEAR_SLOT_IDS[rand(0, 2)];
+  const it = makeGear(slot, rollRarity(rarityOdds(Math.max(1, bLevel("forge"))), floor), castleTier());
+  addTally("gear");
+  return giveGear(it, true);
+}
+// ---------- forging ----------
+function craftCost(master) {
+  const t = gearLevel();
+  const k = Math.pow(t, 1.35);
+  const c = { stone: Math.round(140 * k / 10) * 10, wood: Math.round(110 * k / 10) * 10, essence: Math.round(35 * k / 5) * 5, relics: 2 + t };
+  if (master) c.gold = 25 + t * 12;
+  return c;
+}
+const COST_ICON = { stone: "\u{1FAA8}", wood: "\u{1FAB5}", essence: "\u{2697}\u{FE0F}", relics: "\u{1F3FA}", gold: "\u{1FA99}" };
+const costHtml = (c) => Object.entries(c).map(([k, v]) => `<span class="${(S.res[k] || 0) >= v ? "" : "short"}">${COST_ICON[k]}${v}</span>`).join("");
+const canPay = (c) => Object.entries(c).every(([k, v]) => (S.res[k] || 0) >= v);
+let forgeSlot = "weapon";
+function forgeWorkshopHtml() {
+  const lv = bLevel("forge");
+  if (lv <= 0) return `<div class="section-label" style="margin-top:14px">Workshop</div><div class="altar-note">Build the Iron Forge to start forging gear for your heroes. Until then, raids and Descent bosses still drop it.</div>`;
+  const odds = rarityOdds(lv);
+  const total = odds.reduce((a, [, w]) => a + w, 0);
+  const oddsTxt = odds.filter(([, w]) => w > 0).map(([r, w]) => `<b style="color:${RARITY_COLOR[r]}">${r} ${Math.round((w / total) * 100)}%</b>`).join("  ");
+  const full = S.gear.bag.length >= GEAR_BAG_MAX;
+  const cN = craftCost(false), cM = craftCost(true);
+  return `<div class="section-label" style="margin-top:14px">Workshop  -  item level ${gearLevel()}</div>
+    <div class="fw-slots">${GEAR_SLOT_IDS.map((s) => `<button class="fw-slot ${forgeSlot === s ? "on" : ""}" onclick="pickForgeSlot('${s}')">${GEAR_SLOTS[s].icon}<span>${GEAR_SLOTS[s].name}</span></button>`).join("")}</div>
+    <div class="fw-odds">${oddsTxt}</div>
+    <div class="fw-row">
+      <div><b>Forge</b><span>Rarity is left to the fire.</span><div class="fw-cost">${costHtml(cN)}</div></div>
+      <button class="rs-buy" ${canPay(cN) && !full ? "" : "disabled"} onclick="craftGear(false)">\u{1F528} Forge</button>
+    </div>
+    <div class="fw-row">
+      <div><b>Masterwork</b><span>Gold buys care: Rare or better, always.</span><div class="fw-cost">${costHtml(cM)}</div></div>
+      <button class="rs-buy" ${canPay(cM) && !full ? "" : "disabled"} onclick="craftGear(true)">\u{2728} Masterwork</button>
+    </div>
+    ${lv < 3 ? `<div class="fw-hint">Forge Lv 3 can produce Legendary gear with unique perks.</div>` : ""}
+    <div class="section-label" style="margin-top:14px">Armory  -  ${S.gear.bag.length}/${GEAR_BAG_MAX}</div>
+    ${S.gear.bag.length
+      ? [...S.gear.bag].sort((a, b) => RARITIES.indexOf(b.rarity) - RARITIES.indexOf(a.rarity) || gearPower(b) - gearPower(a))
+          .map((it) => {
+            const sv = salvageValue(it);
+            return gearHtml(it, `<button class="gear-btn ghost" title="Salvage for ${sv.relics} relics, ${sv.essence} essence" onclick="salvageGear(${it.id})">${salvageArm === it.id ? "Sure?" : `\u{267B}\u{FE0F} ${sv.relics}\u{1F3FA}`}</button>`);
+          }).join("")
+      : `<div class="altar-note">The Armory is empty. Forged and looted gear waits here until a hero equips it from the Heroes tab.</div>`}`;
+}
+function pickForgeSlot(s) {
+  forgeSlot = s;
+  openBuildingModal("forge");
+}
+function craftGear(master) {
+  if (bLevel("forge") <= 0 || S.gear.bag.length >= GEAR_BAG_MAX) return;
+  const c = craftCost(master);
+  if (!canPay(c)) return notify("Not enough resources!", "error");
+  Object.entries(c).forEach(([k, v]) => (S.res[k] -= v));
+  const it = makeGear(forgeSlot, rollRarity(rarityOdds(bLevel("forge")), master ? "Rare" : "Common"), gearLevel());
+  giveGear(it, true);
+  addTally("crafts");
+  notify(`${GEAR_SLOTS[it.slot].icon} Forged ${it.name}  -  ${it.rarity}!`, it.rarity === "Legendary" || it.rarity === "Epic" ? "reward" : "success", 4000);
+  burstAt($("modal-box"), RARITY_COLOR[it.rarity], it.rarity === "Legendary" ? 44 : 22);
+  saveGame(true);
+  openBuildingModal("forge");
+}
+function salvageValue(it) {
+  const v = RARITY_SALVAGE[it.rarity];
+  return { relics: v + Math.floor(it.ilvl / 2), essence: v * (8 + it.ilvl * 4) };
+}
+let salvageArm = 0; // the first tap arms the button, the second salvages
+function salvageGear(id) {
+  const it = S.gear.bag.find((x) => x.id === id);
+  if (!it) return;
+  if ((it.rarity === "Epic" || it.rarity === "Legendary") && salvageArm !== id) {
+    salvageArm = id;
+    openBuildingModal("forge");
+    return;
+  }
+  salvageArm = 0;
+  const got = salvageValue(it);
+  S.gear.bag = S.gear.bag.filter((x) => x.id !== id);
+  addCapped(S.res, "relics", got.relics);
+  addCapped(S.res, "essence", got.essence);
+  addTally("salvages");
+  notify(`Salvaged ${it.name}: +${got.relics} relics, +${got.essence} essence`, "success");
+  saveGame(true);
+  openBuildingModal("forge");
+}
+// ---------- equipping (Heroes tab) ----------
+function heroStatChips(h) {
+  const g = gearStats(h);
+  const chip = (lbl, base, add) => `<div class="hstat">${lbl} <span>${base + add}</span>${add ? `<em>+${add}</em>` : ""}</div>`;
+  return chip("ATK", h.atk, g.atk) + chip("DEF", h.def, g.def) + chip("SPD", h.spd, g.spd);
+}
+function equipmentHtml(hi) {
+  const h = S.heroes[hi];
+  const st = heroBattleStats(h);
+  return `<div class="section-label">Equipment  -  ${h.name}</div>
+    <div class="eq-grid">${GEAR_SLOT_IDS.map((s) => {
+      const it = h.gear[s];
+      const spare = S.gear.bag.filter((x) => x.slot === s).length;
+      return `<button class="eq-slot ${it ? "filled" : ""}" style="--rc:${it ? RARITY_COLOR[it.rarity] : "#3a3428"}" onclick="openGearPicker(${hi},'${s}')">
+        <span class="eq-ic">${GEAR_SLOTS[s].icon}</span>
+        <span class="eq-name">${it ? it.name : `No ${GEAR_SLOTS[s].name.toLowerCase()}`}</span>
+        <span class="eq-sub">${it ? gearStatLine(it) : spare ? `${spare} in the Armory` : "empty"}</span>
+        ${spare && !it ? `<i class="eq-dot"></i>` : ""}
+      </button>`;
+    }).join("")}</div>
+    <div class="eq-total">In battle: <b>${st.hp}</b> HP  <b>${st.mp}</b> MP  <b>${st.atk}</b> ATK  <b>${st.def}</b> DEF  <b>${st.spd}</b> SPD${st.perks.length ? `  -  ${st.perks.map((p) => `<span class="gear-perk inline">\u{2726} ${PERKS[p].name}</span>`).join(" ")}` : ""}</div>`;
+}
+// stat difference if `it` replaced what's in its slot
+function gearDiff(cur, it) {
+  const keys = new Set([...Object.keys((cur && cur.stats) || {}), ...Object.keys(it.stats)]);
+  return [...keys]
+    .map((k) => [k, (it.stats[k] || 0) - ((cur && cur.stats[k]) || 0)])
+    .filter(([, d]) => d)
+    .map(([k, d]) => `<span class="${d > 0 ? "up" : "down"}">${d > 0 ? "+" : ""}${d} ${STAT_LABEL[k]}</span>`)
+    .join(" ");
+}
+function openGearPicker(hi, slot) {
+  const h = S.heroes[hi];
+  if (!h) return;
+  const cur = h.gear[slot];
+  const list = S.gear.bag.filter((x) => x.slot === slot).sort((a, b) => gearPower(b) - gearPower(a));
+  const box = $("modal-box");
+  box.style.setProperty("--bc", cur ? RARITY_COLOR[cur.rarity] : "#c8a97e");
+  box.innerHTML = `
+    <div class="modal-head">
+      <div class="modal-icon">${GEAR_SLOTS[slot].icon}</div>
+      <div>
+        <div class="modal-title">${h.name}  -  ${GEAR_SLOTS[slot].name}</div>
+        <div class="modal-sub">${list.length} ${list.length === 1 ? "piece" : "pieces"} in the Armory</div>
+      </div>
+    </div>
+    <div class="section-label">Equipped</div>
+    ${cur ? gearHtml(cur, `<button class="gear-btn ghost" onclick="unequipGear(${hi},'${slot}')">Remove</button>`) : `<div class="altar-note">Nothing equipped.</div>`}
+    <div class="section-label" style="margin-top:12px">Armory</div>
+    ${list.length
+      ? list.map((it) => gearHtml(it, `<div class="gear-side"><div class="gear-diff">${gearDiff(cur, it)}</div><button class="gear-btn" onclick="equipGear(${hi},${it.id})">Equip</button></div>`)).join("")
+      : `<div class="altar-note">No spare ${GEAR_SLOTS[slot].name.toLowerCase()}s. ${bLevel("forge") ? "Forge one at the Iron Forge." : "Win raids and Descent bosses, or build the Iron Forge (Castle Lv 4)."}</div>`}
+    <div class="modal-actions"><button class="mbtn mbtn-ghost" onclick="closeModal()">\u{2715} Close</button></div>`;
+  $("modal").classList.add("open");
+}
+function equipGear(hi, id) {
+  const h = S.heroes[hi];
+  const it = S.gear.bag.find((x) => x.id === id);
+  if (!h || !it) return;
+  S.gear.bag = S.gear.bag.filter((x) => x.id !== id);
+  if (h.gear[it.slot]) S.gear.bag.push(h.gear[it.slot]);
+  h.gear[it.slot] = it;
+  burstAt($("modal-box"), RARITY_COLOR[it.rarity], 16);
+  notify(`${h.name} equips ${it.name}.`, "success");
+  saveGame(true);
+  closeModal();
+  renderPanel();
+}
+function unequipGear(hi, slot) {
+  const h = S.heroes[hi];
+  if (!h || !h.gear[slot]) return;
+  if (S.gear.bag.length >= GEAR_BAG_MAX) return notify("The Armory is full. Salvage something at the Iron Forge first.", "error");
+  S.gear.bag.push(h.gear[slot]);
+  h.gear[slot] = null;
+  saveGame(true);
+  openGearPicker(hi, slot);
+  renderPanel();
+}
+// ==============================================================
+// BOUNTIES  -  three daily and three weekly jobs on the board.
+//   Each bounty counts from a lifetime tally (S.tally) starting at
+//   the moment it was posted. Dailies reset at local midnight,
+//   weeklies on Monday. Finish all three for a bonus cache.
+// ==============================================================
+function addTally(k, n = 1) {
+  if (!S.tally) S.tally = {};
+  S.tally[k] = (S.tally[k] || 0) + n;
+}
+const tally = (k) => (S.tally && S.tally[k]) || 0;
+// goal = [daily min, daily max]; weekly goals are ~5x. req: when the job makes sense to post
+const BOUNTY_TYPES = [
+  { stat: "wins", icon: "\u{2694}\u{FE0F}", text: (n) => `Win ${n} battles`, d: [3, 6], w: [20, 30] },
+  { stat: "breaks", icon: "\u{1F4A5}", text: (n) => `Break ${n} enemies' wards`, d: [3, 6], w: [20, 30] },
+  { stat: "expeditions", icon: "\u{1F9ED}", text: (n) => `Complete ${n} expeditions`, d: [2, 4], w: [10, 15] },
+  { stat: "upgrades", icon: "\u{1F528}", text: (n) => `Finish ${n} building upgrades`, d: [2, 4], w: [10, 15] },
+  { stat: "floors", icon: "\u{1F573}\u{FE0F}", text: (n) => `Clear ${n} Descent floors`, d: [3, 6], w: [20, 30] },
+  { stat: "raids", icon: "\u{1F3F9}", text: (n) => `Win ${n} raids`, d: [1, 3], w: [8, 12] },
+  { stat: "bosses", icon: "\u{1F9DF}", text: (n) => `Defeat ${n} ${n === 1 ? "boss or Depth Guardian" : "bosses or Depth Guardians"}`, d: null, w: [2, 4] },
+  { stat: "crafts", icon: "\u{2699}\u{FE0F}", text: (n) => `Forge ${n} ${n === 1 ? "piece" : "pieces"} of gear`, d: [1, 2], w: [5, 8], req: () => bLevel("forge") > 0 }
+];
+function todayKey() {
+  return new Date().toDateString();
+}
+function weekKey() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // back to Monday
+  return d.toDateString();
+}
+function bountyReward(weekly) {
+  const t = castleTier();
+  if (weekly) return { relics: 8 + t * 3, gold: 50 + t * 15, essence: 60 * t, gear: 1 };
+  const kinds = [
+    { stone: 160 * t, wood: 130 * t },
+    { essence: 35 * t, gold: 10 + t * 3 },
+    { relics: 2 + t, gold: 12 + t * 4 }
+  ];
+  return kinds[rand(0, kinds.length - 1)];
+}
+function rollBounty(weekly, exclude = []) {
+  const pool = BOUNTY_TYPES.filter((b) => (weekly ? b.w : b.d) && (!b.req || b.req()) && !exclude.includes(b.stat));
+  const b = pool[rand(0, pool.length - 1)];
+  const [lo, hi] = weekly ? b.w : b.d;
+  return { stat: b.stat, goal: rand(lo, hi), base: tally(b.stat), claimed: false, reward: bountyReward(weekly) };
+}
+function rollBoard(weekly) {
+  const out = [];
+  while (out.length < 3) out.push(rollBounty(weekly, out.map((x) => x.stat)));
+  return out;
+}
+// posts fresh bounties when the day or week has turned over
+function refreshBounties(quiet) {
+  const bb = S.bounties;
+  let fresh = false;
+  if (bb.day !== todayKey()) {
+    bb.day = todayKey();
+    bb.daily = rollBoard(false);
+    bb.rerolls = 1;
+    bb.dailyBonus = false;
+    fresh = true;
+  }
+  if (bb.week !== weekKey()) {
+    bb.week = weekKey();
+    bb.weekly = rollBoard(true);
+    bb.weeklyBonus = false;
+    fresh = true;
+  }
+  if (fresh) {
+    if (!quiet) notify("New bounties are posted on the board.", "info", 4000);
+    updateQuestProgress("", 0);
+  }
+}
+const bountyType = (stat) => BOUNTY_TYPES.find((b) => b.stat === stat);
+const bountyProg = (b) => Math.min(b.goal, Math.max(0, tally(b.stat) - b.base));
+const bountyDone = (b) => bountyProg(b) >= b.goal;
+function bountiesReady() {
+  const bb = S.bounties;
+  if (!bb || !bb.daily) return 0;
+  return [...bb.daily, ...bb.weekly].filter((b) => !b.claimed && bountyDone(b)).length + (bonusReady(false) ? 1 : 0) + (bonusReady(true) ? 1 : 0);
+}
+function bountySig() {
+  const bb = S.bounties;
+  return [bb.day, bb.week, bb.rerolls, bb.dailyBonus, bb.weeklyBonus, ...[...bb.daily, ...bb.weekly].map((b) => b.stat + b.goal + (b.claimed ? "c" : bountyDone(b) ? "d" : "a"))].join(",");
+}
+function rewardText(r) {
+  return Object.entries(r).map(([k, v]) => (k === "gear" ? `\u{1F381}${v > 1 ? v + " " : ""}gear` : `${COST_ICON[k] || ""}${v}`)).join("  ");
+}
+function untilText(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+  return d ? `${d}d ${h}h` : h ? `${h}h ${m}m` : `${m}m`;
+}
+function resetIn(weekly) {
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(24, 0, 0, 0);
+  if (weekly) next.setDate(next.getDate() + ((8 - next.getDay()) % 7));
+  return untilText(next - now);
+}
+const bonusReady = (weekly) => {
+  const bb = S.bounties, list = weekly ? bb.weekly : bb.daily;
+  return list.length && !(weekly ? bb.weeklyBonus : bb.dailyBonus) && list.every((b) => b.claimed);
+};
+function bountyCard(b, i, weekly) {
+  const t = bountyType(b.stat);
+  const prog = bountyProg(b), done = prog >= b.goal;
+  const key = `${weekly ? "w" : "d"}${i}`;
+  const canReroll = !weekly && !b.claimed && !done && S.bounties.rerolls > 0;
+  return `<div class="quest-card bounty ${weekly ? "weekly" : ""} ${done && !b.claimed ? "complete" : ""} ${b.claimed ? "claimed" : ""}" data-bounty="${key}" ${done && !b.claimed ? `onclick="claimBounty(${weekly}, ${i}, this)"` : ""}>
+    <div class="q-title">${t.icon} ${t.text(b.goal)}</div>
+    <div class="q-progress"><div class="q-fill" style="width:${(prog / b.goal) * 100}%"></div></div>
+    <div class="b-foot">
+      <span class="b-count" data-b-count>${prog}/${b.goal}</span>
+      ${b.claimed
+        ? `<span style="font-size:10px;color:var(--green)">\u{2713} Claimed</span>`
+        : done
+        ? `<button class="q-claim">CLAIM</button>`
+        : `<span class="q-reward">${rewardText(b.reward)}</span>`}
+      ${canReroll ? `<button class="b-reroll" title="Swap this bounty for another (once a day)" onclick="event.stopPropagation();rerollBounty(${i})">\u{1F504}</button>` : ""}
+    </div>
+  </div>`;
+}
+function bonusCard(weekly) {
+  const bb = S.bounties, got = weekly ? bb.weeklyBonus : bb.dailyBonus, ready = bonusReady(weekly);
+  const label = weekly ? "Weekly Cache: an Epic-or-better piece of gear" : "Daily Cache: a Healing Draught and gold";
+  return `<div class="b-bonus ${ready ? "ready" : ""} ${got ? "got" : ""}" ${ready ? `onclick="claimBountyBonus(${weekly}, this)"` : ""}>
+    <span>\u{1F381}</span><div>${got ? "Cache opened" : ready ? "All three done! Tap to open the cache" : "Finish all three"}<small>${label}</small></div>
+  </div>`;
+}
+function bountiesHtml() {
+  const bb = S.bounties;
+  return `<div class="section-label b-head">Daily Bounties <span data-reset="d">resets in ${resetIn(false)}</span></div>
+    ${bb.daily.map((b, i) => bountyCard(b, i, false)).join("")}
+    ${bonusCard(false)}
+    <div class="section-label b-head" style="margin-top:14px">Weekly Bounties <span data-reset="w">resets in ${resetIn(true)}</span></div>
+    ${bb.weekly.map((b, i) => bountyCard(b, i, true)).join("")}
+    ${bonusCard(true)}
+    <div class="divider"></div>`;
+}
+function patchBounties(c) {
+  const bb = S.bounties;
+  c.querySelectorAll("[data-bounty]").forEach((card) => {
+    const k = card.dataset.bounty;
+    const b = (k[0] === "w" ? bb.weekly : bb.daily)[+k.slice(1)];
+    if (!b) return;
+    const fill = card.querySelector(".q-fill");
+    const w = (bountyProg(b) / b.goal) * 100 + "%";
+    if (fill && fill.style.width !== w) fill.style.width = w;
+    setText(card.querySelector("[data-b-count]"), `${bountyProg(b)}/${b.goal}`);
+  });
+  setText(c.querySelector('[data-reset="d"]'), `resets in ${resetIn(false)}`);
+  setText(c.querySelector('[data-reset="w"]'), `resets in ${resetIn(true)}`);
+}
+function payReward(r, weekly) {
+  const parts = [];
+  Object.entries(r).forEach(([k, v]) => {
+    if (k === "gear") {
+      for (let i = 0; i < v; i++) {
+        const it = makeGear(GEAR_SLOT_IDS[rand(0, 2)], rollRarity(rarityOdds(Math.max(1, bLevel("forge"))), weekly ? "Rare" : "Common"), castleTier());
+        giveGear(it, true);
+        parts.push(`${it.name} (${it.rarity})`);
+      }
+    } else {
+      addCapped(S.res, k, v);
+      parts.push(`+${v} ${k}`);
+    }
+  });
+  return parts.join(", ");
+}
+function claimBounty(weekly, i, el) {
+  const b = (weekly ? S.bounties.weekly : S.bounties.daily)[i];
+  if (!b || b.claimed || !bountyDone(b)) return;
+  b.claimed = true;
+  const txt = payReward(b.reward, weekly);
+  if (el) burstAt(el, weekly ? "#c08ae8" : "#7aca8a", 20);
+  notify(`Bounty complete: ${txt}`, "reward", 4500);
+  saveGame(true);
+  updateQuestProgress("", 0);
+  renderPanel();
+}
+function claimBountyBonus(weekly, el) {
+  if (!bonusReady(weekly)) return;
+  let txt;
+  if (weekly) {
+    S.bounties.weeklyBonus = true;
+    const it = makeGear(GEAR_SLOT_IDS[rand(0, 2)], rollRarity([["Epic", 75], ["Legendary", 25]]), castleTier());
+    giveGear(it, true);
+    txt = `${it.name} (${it.rarity})`;
+  } else {
+    S.bounties.dailyBonus = true;
+    S.items.draught = (S.items.draught || 0) + 1;
+    addCapped(S.res, "gold", 20 + castleTier() * 5);
+    txt = `+1 Healing Draught, +${20 + castleTier() * 5} gold`;
+  }
+  if (el) burstAt(el, "#e8c07c", 30);
+  notify(`Cache opened: ${txt}`, "reward", 5000);
+  saveGame(true);
+  updateQuestProgress("", 0);
+  renderPanel();
+}
+function rerollBounty(i) {
+  const bb = S.bounties;
+  const b = bb.daily[i];
+  if (!b || b.claimed || bountyDone(b) || bb.rerolls <= 0) return;
+  bb.rerolls--;
+  bb.daily[i] = rollBounty(false, bb.daily.map((x) => x.stat));
+  notify("The board shuffles. A new bounty is posted.", "info");
+  saveGame(true);
+  renderPanel();
 }
 // ==============================================================
 // NOTIFICATIONS
@@ -5769,6 +6302,7 @@ if (loadGame()) {
   checkCastleLevel();
 }
 refreshDaily();
+refreshBounties(true);
 renderBmap();
 renderPanel();
 updateCP();

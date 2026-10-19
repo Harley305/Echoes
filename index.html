@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Echoes - City of the Unknown</title>
+  <link rel="stylesheet" href="echoes.css">
+</head>
+<body>
+  <div id="splash">
+    <div class="splash-inner">
+      <div class="splash-crest">&#x1F3F0;</div>
+      <div class="splash-title">ECHOES</div>
+      <div class="splash-sub">City of the Unknown</div>
+      <div class="splash-divider"></div>
+      <div class="splash-tagline">A city rises from stone and shadow at the edge of the known world. Build your keep, command your heroes, and raid the ruins beyond the walls. Something out there still remembers you.</div>
+      <button class="splash-begin" onclick="closeSplash()">Begin</button>
+      <div class="splash-foot">A ROUGH DRAFT BY CHRISTOPHER DAVIDSON</div>
+    </div>
+  </div>
+  <!-- == CHAMPION FORGING (first run) == -->
+  <div id="forge">
+    <div class="forge-panel">
+      <h2>Forge Your Champion</h2>
+      <p class="fg-intro">"The path through the void demands both strength and strategic grit."</p>
+      <div class="forge-layout">
+        <div class="fg-col">
+          <label class="fg-label" for="forge-name">Champion Name</label>
+          <input id="forge-name" maxlength="18" placeholder="Enter a name..." oninput="renderForge()">
+          <div class="fg-label">Combat Discipline</div>
+          <div class="fg-classes" id="fg-classes"></div>
+          <div class="fg-label">Origin</div>
+          <div class="fg-origins" id="fg-origins"></div>
+        </div>
+        <div class="fg-col fg-center">
+          <div class="forge-portrait">
+            <div class="depth-blur-bg"></div>
+            <canvas id="forge-embers"></canvas>
+            <img id="forge-sprite" class="px" alt="">
+            <div class="forge-plinth"></div>
+          </div>
+          <div class="forge-title" id="forge-title"></div>
+          <div class="forge-role" id="forge-role"></div>
+          <div id="fg-stats"></div>
+        </div>
+        <div class="fg-col">
+          <div class="fg-label">Attributes <span id="fg-points"></span></div>
+          <div id="fg-attrs"></div>
+          <div class="fg-label">Battle Arts</div>
+          <div id="fg-skills"></div>
+        </div>
+      </div>
+      <div class="forge-footer">
+        <span class="fg-note">The other two heroes join as companions. Your champion leads the party.</span>
+        <button class="fg-confirm btn-gilded" onclick="confirmForge()">Forge Champion</button>
+      </div>
+    </div>
+  </div>
+  <div id="app">
+  <!-- == TOP BAR == -->
+  <div id="topbar">
+    <div id="castle-badge">&#x1F3F0; LV.1</div>
+    <div class="res"><span class="res-ic">&#x1FAA8;</span><span class="res-v" id="r-stone">200</span><span class="res-r" id="rr-stone">+2</span></div>
+    <div class="res"><span class="res-ic">&#x1FAB5;</span><span class="res-v" id="r-wood">150</span><span class="res-r" id="rr-wood">+1</span></div>
+    <div class="res"><span class="res-ic">&#x2697;&#xFE0F;</span><span class="res-v" id="r-ess">40</span><span class="res-r" id="rr-ess">+0</span></div>
+    <div class="res" title="Relics, recovered on expeditions"><span class="res-ic">&#x1F3FA;</span><span class="res-v" id="r-relic">0</span></div>
+    <div class="res" title="Gold, found in Descents"><span class="res-ic">&#x1FA99;</span><span class="res-v" id="r-gold">0</span></div>
+    <div class="res"><span class="res-ic">&#x2694;&#xFE0F;</span><span class="res-v" id="r-troops">0</span><span class="res-r res-cap">/50</span></div>
+    <div class="spacer"></div>
+    <button class="top-btn top-world" onclick="openWorld()">&#x1F5FA;&#xFE0F; World</button>
+    <button class="top-btn top-daily" onclick="openDaily()">&#x1F381; Daily</button>
+    <button class="top-btn top-save" onclick="saveGame()">&#x1F4BE; Save</button>
+  </div>
+  <!-- == MAIN == -->
+  <div id="main">
+    <!-- CITY VIEW -->
+    <div id="city-view">
+      <canvas id="city-bg"></canvas>
+      <div id="bmap"></div>
+      <div id="castle-prog">
+        <span class="cp-txt" id="cp-txt">CASTLE ADV.</span>
+        <div class="cp-bar"><div class="cp-fill" id="cp-fill" style="width:0%"></div></div>
+        <span class="cp-txt" id="cp-pct">0%</span>
+      </div>
+    </div>
+    <!-- RIGHT PANEL -->
+    <div id="rpanel">
+      <div class="panel-tabs">
+        <div class="ptab active" onclick="switchTab('quests',this)">QUESTS<span class="ptab-badge" id="quest-badge"></span></div>
+        <div class="ptab" onclick="switchTab('heroes',this)">HEROES</div>
+        <div class="ptab" onclick="switchTab('explore',this)">EXPLORE<span class="ptab-badge" id="exp-badge"></span></div>
+        <div class="ptab" onclick="switchTab('raid',this)">RAID<span class="ptab-badge" id="raid-badge"></span></div>
+      </div>
+      <div class="panel-content" id="panel-content"></div>
+    </div>
+  </div>
+  </div>
+  <!-- == BUILDING DETAIL MODAL == -->
+  <div id="modal" onclick="if(event.target===this)closeModal()">
+    <div class="modal-box" id="modal-box"></div>
+  </div>
+  <!-- == WORLD MAP == -->
+  <div id="world">
+    <div class="w-top">
+      <div class="w-head">
+        <div class="w-title" id="w-title">The Wastes</div>
+        <div class="w-zone" id="w-zone"></div>
+      </div>
+      <div class="w-party" id="w-party"></div>
+      <button class="top-btn w-view" id="w-view" onclick="toggleIso()">2D view</button>
+      <button class="top-btn w-home" id="w-home" onclick="leaveWorld()">&#x1F3F0; Return</button>
+    </div>
+    <div class="w-stage">
+      <div class="tilt-shift-viewport">
+        <canvas id="w-canvas"></canvas>
+      </div>
+      <div class="w-toast" id="w-toast"></div>
+      <div class="w-flash" id="w-flash"></div>
+      <div class="w-choice" id="w-choice"></div>
+    </div>
+    <div class="w-bottom">
+      <div class="w-pack" id="w-pack"></div>
+      <div class="w-pad" onpointerup="padStop()" onpointerleave="padStop()" onpointercancel="padStop()">
+        <button class="pad-up" aria-label="up" onpointerdown="padStart('up',event)"><i></i></button>
+        <button class="pad-left" aria-label="left" onpointerdown="padStart('left',event)"><i></i></button>
+        <button class="pad-right" aria-label="right" onpointerdown="padStart('right',event)"><i></i></button>
+        <button class="pad-down" aria-label="down" onpointerdown="padStart('down',event)"><i></i></button>
+      </div>
+      <div class="w-hint">Arrow keys / WASD or the pad. Walk into the &#x1F3F0; gate to go home.</div>
+    </div>
+  </div>
+  <!-- == DESCENT (room-by-room runs) == -->
+  <div id="descent">
+    <div class="w-top">
+      <div class="w-head">
+        <div class="w-title" id="d-title">Descent</div>
+        <div class="d-depth" id="d-depth"></div>
+      </div>
+      <div class="w-party" id="d-party"></div>
+    </div>
+    <div class="d-stage" id="d-stage"></div>
+    <div class="d-foot">
+      <div class="d-boons" id="d-boons"></div>
+      <div class="w-pack" id="d-pack"></div>
+    </div>
+  </div>
+  <!-- == COMBAT MODAL == -->
+  <div id="combat-modal">
+    <div class="combat-box" id="combat-box"></div>
+  </div>
+  <!-- == LEVEL UP == -->
+  <div id="levelup">
+    <div class="lu-box">
+      <div class="lu-rays"></div>
+      <div style="font-size:50px;margin-bottom:10px;animation:float 2s ease-in-out infinite">&#x1F3F0;</div>
+      <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:5px;color:var(--goldb);margin-bottom:8px">CASTLE ADVANCE</div>
+      <div class="lu-level" id="lu-lv">LEVEL 2</div>
+      <div style="font-style:italic;font-size:14px;color:#a09070;line-height:1.6;margin-bottom:16px" id="lu-msg"></div>
+      <div id="lu-unlocks" style="display:flex;flex-direction:column;gap:5px;margin-bottom:20px"></div>
+      <button class="lu-btn" onclick="closeLevelUp()">Continue &rarr;</button>
+    </div>
+  </div>
+  <!-- == DAILY REWARD == -->
+  <div id="daily">
+    <div class="daily-box">
+      <button class="daily-close" onclick="closeDaily()" aria-label="Close">&times;</button>
+      <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:5px;color:var(--void);margin-bottom:8px">DAILY RETURN</div>
+      <div style="font-family:'Cinzel',serif;font-size:20px;color:var(--stone);margin-bottom:4px">Welcome Back</div>
+      <div style="font-size:13px;color:#666;font-style:italic;margin-bottom:4px">Claim your daily reward</div>
+      <div class="reward-grid" id="reward-grid"></div>
+      <button class="daily-claim" onclick="claimDaily()">Claim Today's Reward</button>
+    </div>
+  </div>
+  <!-- == LORE ECHO POPUP == -->
+  <div id="lore-pop" onclick="closeLore()">
+    <div class="lore-box">
+      <div class="lore-glyph">&#x1F441;&#xFE0F;</div>
+      <div class="lore-kicker" id="lore-kicker">ECHO RECOVERED</div>
+      <div class="lore-text" id="lore-text"></div>
+      <div class="lore-hint">tap anywhere to continue</div>
+    </div>
+  </div>
+  <!-- NOTIF STACK -->
+  <div id="notif-stack"></div>
+  <!-- FX LAYER (floating numbers, sparks) -->
+  <div id="fx-layer"></div>
+  <script src="echoes.js"></script>
+</body>
+</html>

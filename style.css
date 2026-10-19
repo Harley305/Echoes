@@ -1321,3 +1321,15 @@ align-items:center;justify-content:center;padding:20px;
 .chron-next{font-size:12px;color:#8a7d68;font-style:italic;margin:10px 0 4px}
 .chron-next b{color:var(--gold);font-style:normal;font-weight:400;font-family:'Cinzel',serif;font-size:11px}
 @media(max-width:560px){.story-box{padding:22px 18px 18px}.st-title{font-size:18px}.st-text{font-size:15px}}
+
+/* ================================================================
+   OLD MAREN (the city's rebirth guide) and story buttons
+   ================================================================ */
+.st-btns{display:flex;justify-content:center;gap:10px;margin-top:22px}
+.st-btns .st-btn{margin:0}
+.st-btn.ghost{background:transparent;color:#8a7d68;border-color:#3a3428;font-weight:400}
+.st-btn.ghost:hover{color:var(--gold);border-color:var(--goldb);background:transparent}
+.st-line.npc .st-av{font-size:24px;filter:drop-shadow(0 0 8px #ffbe74)}
+.bnode.npc .bnode-plate{border-style:solid;background:#120e16d9}
+.bnode.npc.fresh .bnode-plate{border-color:var(--bc);animation:pulse-gold 1.8s infinite}
+.bnode.npc.fresh .bnode-icon{animation:readyBob 1.2s ease-in-out infinite;display:inline-block}

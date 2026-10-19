@@ -579,13 +579,14 @@ const CITY_PLOTS = {
   farm: { x: 0.14, y: 0.93, d: 0.95 },
   quarry: { x: 0.36, y: 0.935, d: 0.95 },
   reliquary: { x: 0.64, y: 0.935, d: 0.92 },
-  beacon: { x: 0.86, y: 0.93, d: 0.95 }
+  beacon: { x: 0.86, y: 0.93, d: 0.95 },
+  maren: { x: 0.585, y: 0.7, d: 1.05 } // Old Maren, by the gate (not a building)
 };
 // clickable size of each building, in drawing units
 const PLOT_BOX = {
   keep: [64, 96], barracks: [34, 40], farm: [46, 34], quarry: [44, 26], archive: [24, 62], market: [48, 22],
   tower: [14, 78], wall: [60, 22], temple: [30, 40], forge: [32, 42], echowell: [24, 30], reliquary: [26, 36],
-  beacon: [14, 56], hall: [48, 30], observatory: [26, 40]
+  beacon: [14, 56], hall: [48, 30], observatory: [26, 40], maren: [24, 22]
 };
 function plotGeom(id, w, h) {
   const pl = CITY_PLOTS[id];
@@ -1572,6 +1573,62 @@ let cityHover = null; // building under the pointer, lit up on the canvas
       if (lit) ctx.restore();
       if (bs.upgrading) drawScaffold(p.box);
     });
+    if (marenHere()) drawMaren();
+  }
+  // Old Maren: a hunched cloaked figure, a cane, a lantern and her goat
+  function drawMaren() {
+    const p = plotGeom("maren", w, h);
+    T = { x: p.x, y: p.y, u: p.u };
+    const lit = cityHover === "maren";
+    const sway = Math.sin(t * 0.03) * 0.6;
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    ctx.beginPath();
+    ctx.ellipse(T.x, T.y + 1, 13 * T.u, 2.5 * T.u, 0, 0, Math.PI * 2);
+    ctx.fill();
+    const f = 0.8 + Math.sin(t * 0.21) * 0.1 + Math.random() * 0.05;
+    tGlow(-6, -9, (lit ? 24 : 18) * f, `rgba(255,190,110,${(lit ? 0.5 : 0.38) * f})`);
+    // cloak
+    ctx.fillStyle = SIL;
+    ctx.beginPath();
+    ctx.moveTo(tx(-4), ty(0));
+    ctx.quadraticCurveTo(tx(-5 + sway), ty(-10), tx(-1 + sway), ty(-15));
+    ctx.quadraticCurveTo(tx(3 + sway), ty(-17), tx(4 + sway), ty(-12));
+    ctx.quadraticCurveTo(tx(5), ty(-6), tx(4), ty(0));
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(tx(2.6 + sway), ty(-14.5), 2.4 * T.u, 0, Math.PI * 2);
+    ctx.fill();
+    // cane
+    ctx.strokeStyle = "#1e150d";
+    ctx.lineWidth = Math.max(1, 0.8 * T.u);
+    ctx.beginPath();
+    ctx.moveTo(tx(6.5), ty(0));
+    ctx.lineTo(tx(5.5 + sway), ty(-11));
+    ctx.stroke();
+    // lantern held out low
+    ctx.strokeStyle = "#2a1e12";
+    ctx.beginPath();
+    ctx.moveTo(tx(-3 + sway), ty(-10));
+    ctx.lineTo(tx(-6), ty(-8));
+    ctx.stroke();
+    ctx.fillStyle = `rgba(255,205,130,${f})`;
+    ctx.fillRect(tx(-7.2), ty(-8), 2.4 * T.u, 3 * T.u);
+    // the goat, grazing
+    const nod = Math.max(0, Math.sin(t * 0.05)) * 1.2;
+    ctx.fillStyle = "#1a130d";
+    ctx.fillRect(tx(-18), ty(-6), 8 * T.u, 3.4 * T.u);
+    [-17.5, -15.8, -12.4, -10.8].forEach((x) => ctx.fillRect(tx(x), ty(-2.8), 0.9 * T.u, 2.8 * T.u));
+    ctx.beginPath();
+    ctx.moveTo(tx(-18), ty(-5.6));
+    ctx.lineTo(tx(-21), ty(-3.4 + nod));
+    ctx.lineTo(tx(-20), ty(-2 + nod));
+    ctx.lineTo(tx(-17.6), ty(-4));
+    ctx.fill();
+    ctx.strokeStyle = "#1a130d";
+    ctx.beginPath();
+    ctx.moveTo(tx(-19.3), ty(-5 + nod));
+    ctx.quadraticCurveTo(tx(-19), ty(-7.6 + nod), tx(-17.2), ty(-7.4 + nod));
+    ctx.stroke();
   }
 
   function draw(now) {
@@ -1930,6 +1987,7 @@ function renderBmap() {
       slot.querySelector(".bnode-timer").textContent = `${bs.timer}s`;
     }
   });
+  marenNode(map, vw, vh);
   layoutPlates(map);
   $("castle-badge").textContent = `\u{1F3F0} LV.${S.castleLevel}`;
   $("castle-badge").title = `${CASTLE_TIERS[castleTier() - 1]}  -  tap for the Altar of Memory`;
@@ -2121,6 +2179,7 @@ function checkCastleLevel() {
 function closeLevelUp() {
   $("levelup").classList.remove("open");
   renderBmap();
+  marenCheck();
 }
 // ==============================================================
 // TABS
@@ -6675,7 +6734,15 @@ function rerollBounty(i) {
 // STORY SCENES & THE CHRONICLE
 // ==============================================================
 let storyAfter = null;
+// people of the city who aren't heroes
+const NPCS = { maren: { name: "Old Maren", icon: "\u{1F3EE}", color: "#c9b6e8" } };
 function speakerHtml([id, words]) {
+  const n = NPCS[id];
+  if (n)
+    return `<div class="st-line npc" style="--rc:${n.color}">
+    <div class="st-av">${n.icon}</div>
+    <div><b>${n.name}</b><span>\u{201C}${words}\u{201D}</span></div>
+  </div>`;
   const h = S.heroes.find((x) => x.id === id);
   if (!h) return "";
   return `<div class="st-line" style="--rc:${RARITY_COLOR[h.rarity] || "#8a9fe8"}">
@@ -6692,9 +6759,10 @@ function sceneHtml(kicker, title, sc) {
     ${(sc.lines || []).map(speakerHtml).join("")}
     ${sc.end ? `<div class="st-end">${sc.end}</div>` : ""}`;
 }
-function openStory(html, after, btn = "Continue") {
+// alt: an optional second, quieter button that just closes the scene
+function openStory(html, after, btn = "Continue", alt = "") {
   storyAfter = after || null;
-  $("story-box").innerHTML = html + `<button class="st-btn" onclick="closeStory()">${btn} \u{2192}</button>`;
+  $("story-box").innerHTML = html + `<div class="st-btns">${alt ? `<button class="st-btn ghost" onclick="storyAfter=null;closeStory()">${alt}</button>` : ""}<button class="st-btn" onclick="closeStory()">${btn} \u{2192}</button></div>`;
   $("story").classList.add("open");
   $("story-box").scrollTop = 0;
 }
@@ -6735,6 +6803,82 @@ function openChronicle() {
     ${S.lore.length ? `<div class="section-label" style="margin-top:14px">Recovered Echoes</div>${LORE.filter((_, i) => S.lore.includes(i)).map((t) => `<div class="echo found">\u{201C}${t}\u{201D}</div>`).join("")}` : ""}
     <div class="modal-actions"><button class="mbtn mbtn-ghost" onclick="closeModal()">\u{2715} Close</button></div>`;
   $("modal").classList.add("open");
+}
+// ==============================================================
+// OLD MAREN  -  the woman at the gate who has watched every city fall.
+//   Once rebirth unlocks (Castle Lv 6) she waits by the gate with her
+//   goat and her lantern. Tap her and she suggests letting the city
+//   fall. She seeks you out on her own once per life, the first time
+//   the castle reaches Lv 6.
+// ==============================================================
+function marenHere() {
+  return (S.castleLevel || 1) >= 6;
+}
+function marenScene() {
+  const L = S.castleLevel || 1, life = S.lives || 1, gain = echoGain();
+  let text, lines;
+  if (L >= CASTLE_MAX) {
+    text = ["Maren is waiting at the top of the highest stair, which should not be possible for a woman with a cane and a goat. She is looking at the sky, because there is nothing else left above you."];
+    lines = [
+      ["maren", "Nothing over your head now but stars. There's nowhere left to build, Keeper. The only way up from here is down."],
+      ["maren", "Go on. Let it fall. You'll carry more of it this time than you ever have."]
+    ];
+  } else if (life <= 1) {
+    text = ["The old woman from the gate finds you on the walls at dusk. Her goat chews on your cloak. She does not apologize for it."];
+    lines = [
+      ["maren", "Six towers. That's about where it starts to lean. You feel it too, don't you? The stone's tired of holding up a city it already knows how to lose."],
+      ["maren", "Let it fall, Keeper. Not because you failed. Because this time, you carry it down with you. What you remember, the next city keeps."],
+      ["mystic", "She's right. I can hear the Altar from here. It's been calling since the sixth tower went up."]
+    ];
+  } else {
+    text = [`Life ${roman(life)}. The goat recognizes you before she does. Maren shuffles up the road, lantern swinging, and looks over what you've built this time.`];
+    lines = [
+      ["maren", life >= 4 ? "You're getting good at this. I almost hate to say it, but the city falls better every time you do it." : "You again. Faster than last time. Good. The stone remembers who's in a hurry."],
+      ["maren", "Same cliff, same tired stone. Let it go when you're ready. I'll be at the gate when you come back. I always am."]
+    ];
+  }
+  return { text, lines, end: gain > 0 ? `Letting the city fall now earns \u{2728} ${gain} Memory Shards. The Altar is always one tap away on the castle badge.` : "" };
+}
+function showMaren(auto) {
+  if (!marenHere()) return;
+  S.story.marenLife = S.lives || 1; // she's said her piece this life
+  saveGame(true);
+  openStory(sceneHtml(auto ? "THE GATE  -  AT DUSK" : "THE GATE", "The Woman with the Goat", marenScene()), () => openAltar(), "To the Altar", "Not yet");
+  renderBmap();
+}
+// her first visit each life comes on its own, right after the castle reaches Lv 6
+function marenCheck() {
+  if (marenHere() && S.story.marenLife !== (S.lives || 1) && !$("story").classList.contains("open")) setTimeout(() => showMaren(true), 700);
+}
+// her spot in the city: by the gate, lantern lit
+function marenNode(map, vw, vh) {
+  let n = map.querySelector('[data-id="maren"]');
+  if (!n) {
+    n = document.createElement("div");
+    n.className = "bnode npc";
+    n.dataset.id = "maren";
+    n.style.setProperty("--bc", NPCS.maren.color);
+    n.onclick = () => showMaren(false);
+    n.onmouseenter = () => (cityHover = "maren");
+    n.onmouseleave = () => cityHover === "maren" && (cityHover = null);
+    n.title = "Old Maren";
+    map.appendChild(n);
+  }
+  n.style.display = marenHere() ? "" : "none";
+  if (!marenHere() || !vw) return;
+  const p = plotGeom("maren", vw, vh);
+  n.style.left = p.x + "px";
+  n.style.top = p.y + "px";
+  n.style.width = p.box[0] * p.u + "px";
+  n.style.height = p.box[1] * p.u + "px";
+  n.style.zIndex = Math.round(p.y);
+  const fresh = S.story.marenLife !== (S.lives || 1);
+  const html = `<div class="bnode-plate"><span class="bnode-icon">${fresh ? "\u{2757}" : "\u{1F4AC}"}</span><span class="bnode-name">Old Maren</span></div>`;
+  if (n._html !== html) {
+    n._html = html;
+    n.innerHTML = html;
+    n.classList.toggle("fresh", fresh);
+  }
 }
 // ==============================================================
 // NOTIFICATIONS

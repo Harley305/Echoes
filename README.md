@@ -10,6 +10,7 @@ No build step and no dependencies: open `index.html` in a browser. Progress save
 
 ## Features
 
+- **Ages of the city** *(new).* Each Rebirth rebuilds the city in a more advanced era: Stone, then Glass (renaissance domes), Iron (factories and gaslight), and Light (glass towers and a lit skyline). Every life flies its own banner color, the keeps of past lives haunt the far hills, and the gate stone gains a mark for every keep.
 - **Story: Act I, The Twelfth Keep** *(new).* A 12-chapter story chain with a prologue, narrated scenes in your heroes' voices, and a Chronicle for rereading everything you've uncovered. Your place in the story carries over through Rebirth. From Castle Lv 6, Old Maren waits by the gate with her goat and lantern to guide you toward the Altar.
 - **City.** 15 buildings across 10 castle tiers, offline progress, and buildings that can be pushed past their max level.
 - **A living city screen** *(new).* The buildings are drawn into the scene around the keep, in rows from the horizon to the foreground. They grow as they level, show scaffolding while upgrading, and glow when selected. Floating nameplates show each building's level and when an upgrade is affordable.

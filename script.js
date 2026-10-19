@@ -400,6 +400,7 @@ let S = {
   dailyClaimed: false,
   upgradesTotal: 0,
   story: { prologue: false },
+  pastLives: [], // the keep each earlier life reached, drawn as ghosts on the hills
   gear: { bag: [], next: 1 }, // unequipped gear (equipped pieces live on each hero)
   tally: {}, // lifetime counters for bounties; never reset, not even by rebirth
   bounties: { day: "", daily: [], week: "", weekly: [], rerolls: 1, dailyBonus: false, weeklyBonus: false }
@@ -428,6 +429,9 @@ function migrateSave() {
   if (S.res.gold === undefined) S.res.gold = 0;
   if (S.expeditions === undefined) S.expeditions = 0;
   if (S.dailyDate === undefined) S.dailyDate = "";
+  // lives lived before ghost keeps were recorded still leave their ghosts
+  if (!Array.isArray(S.pastLives)) S.pastLives = [];
+  while (S.pastLives.length < (S.lives || 1) - 1) S.pastLives.push({ tier: 6, life: S.pastLives.length + 1 });
   S.heroes.forEach((h) => {
     if (h.exp === undefined) h.exp = null;
   });
@@ -596,9 +600,30 @@ function plotGeom(id, w, h) {
   return { x: pl.x * w, y: pl.y * h, u, box, gap: ((1 - 2 * pl.x) * w) / u };
 }
 let cityHover = null; // building under the pointer, lit up on the canvas
+// ---------- ages of the city: each life rebuilds in a more advanced era ----------
+// Life I stone, II glass (renaissance), III iron (industrial), IV+ light (modern)
+const ERAS = [
+  { name: "Age of Stone", win: [255, 190, 110] },
+  { name: "Age of Glass", win: [255, 214, 140] },
+  { name: "Age of Iron", win: [255, 226, 150] },
+  { name: "Age of Light", win: [205, 232, 255] }
+];
+function eraIdx() {
+  return Math.max(0, Math.min(ERAS.length - 1, (S.lives || 1) - 1));
+}
+// each life flies its own banner color
+const LIFE_BANNERS = ["", "#3d6fc4cc", "#b0302acc", "#7a4cc0cc", "#2e9a7ecc", "#c8a030cc", "#c0508acc"];
+function lifeBanner(c) {
+  const life = S.lives || 1;
+  return life <= 1 ? c : LIFE_BANNERS[(life - 1) % (LIFE_BANNERS.length - 1) + 1] || c;
+}
 (function () {
   const cv = $("city-bg");
-  const ctx = cv.getContext("2d");
+  const mainCtx = cv.getContext("2d");
+  let ctx = mainCtx; // swapped to the era layer while the castle and town are painted
+  const layer = document.createElement("canvas");
+  const lctx = layer.getContext("2d");
+  let pendingWins = []; // lit windows wait until after the era texture, so they stay bright
   let t = 0, w = 0, h = 0, dt = 1;
   const clock = frameClock();
   let stars = [], embers = [], shoot = null;
@@ -656,6 +681,7 @@ let cityHover = null; // building under the pointer, lit up on the canvas
     ctx.fill();
   }
   function banner(x, top, len, color, t) {
+    color = lifeBanner(color);
     const { cx, by, s } = C;
     const wave = Math.sin(t * 0.06 + x) * 2.5;
     ctx.fillStyle = SIL;
@@ -669,15 +695,214 @@ let cityHover = null; // building under the pointer, lit up on the canvas
   }
   function windowsLit(list, t) {
     const { cx, by, s } = C;
-    ctx.save();
-    ctx.shadowColor = "#ffb060";
-    ctx.shadowBlur = 8;
+    const [r, g, b] = ERAS[eraIdx()].win;
     list.forEach(([wx, wy], i) => {
       const f = 0.6 + Math.sin(t * 0.08 + i * 1.7) * 0.2 + Math.sin(t * 0.31 + i) * 0.08;
-      ctx.fillStyle = `rgba(255,190,110,${f})`;
-      ctx.fillRect(cx + (wx - 1.5) * s, by + wy * s, 3 * s, 5 * s);
+      pendingWins.push([cx + (wx - 1.5) * s, by + wy * s, 3 * s, 5 * s, `rgba(${r},${g},${b},${f})`, `rgb(${r},${g},${b})`]);
     });
-    ctx.restore();
+    if (ctx === mainCtx) flushWins();
+  }
+  function flushWins() {
+    if (!pendingWins.length) return;
+    mainCtx.save();
+    mainCtx.shadowBlur = 8;
+    pendingWins.forEach(([x, y, ww, hh, fill, glow]) => {
+      mainCtx.shadowColor = glow;
+      mainCtx.fillStyle = fill;
+      mainCtx.fillRect(x, y, ww, hh);
+    });
+    mainCtx.restore();
+    pendingWins = [];
+  }
+  // ---------- the era layer: paint buildings off-screen, then texture them ----------
+  function eraPaint(draw, scale) {
+    const era = eraIdx();
+    if (era === 0) {
+      draw();
+      flushWins();
+      return;
+    }
+    if (layer.width !== w || layer.height !== h) {
+      layer.width = w;
+      layer.height = h;
+    } else lctx.clearRect(0, 0, w, h);
+    ctx = lctx;
+    draw();
+    ctx = mainCtx;
+    lctx.save();
+    lctx.globalCompositeOperation = "source-atop";
+    eraTexture(lctx, era, Math.max(2, scale));
+    lctx.restore();
+    mainCtx.drawImage(layer, 0, 0);
+    flushWins();
+  }
+  // the surface of each age, laid only over what was painted
+  function eraTexture(c, era, s) {
+    if (era === 1) {
+      // plaster and carved cornices, warm in the lamplight
+      c.fillStyle = "rgba(225,190,140,0.10)";
+      c.fillRect(0, 0, w, h);
+      c.fillStyle = "rgba(240,210,160,0.16)";
+      for (let y = h * 0.66; y > 0; y -= 16 * s) c.fillRect(0, y, w, Math.max(1, 0.8 * s));
+      c.fillStyle = "rgba(90,150,130,0.10)"; // verdigris high up, on the old copper
+      c.fillRect(0, 0, w, h * 0.4);
+    } else if (era === 2) {
+      // brick courses and riveted iron
+      c.fillStyle = "rgba(90,70,60,0.22)";
+      c.fillRect(0, 0, w, h);
+      c.fillStyle = "rgba(0,0,0,0.28)";
+      for (let y = h * 0.66; y > 0; y -= 3.2 * s) c.fillRect(0, y, w, 1);
+      c.fillStyle = "rgba(170,175,185,0.14)";
+      for (let x = (w / 2) % (18 * s); x < w; x += 18 * s) c.fillRect(x, 0, Math.max(1, 0.7 * s), h);
+    } else {
+      // glass curtain walls: mullions, floor lines and a sky reflection
+      const g = c.createLinearGradient(0, 0, 0, h * 0.7);
+      g.addColorStop(0, "rgba(140,190,255,0.20)");
+      g.addColorStop(1, "rgba(60,90,140,0.10)");
+      c.fillStyle = g;
+      c.fillRect(0, 0, w, h);
+      c.fillStyle = "rgba(170,215,255,0.16)";
+      for (let x = (w / 2) % (6 * s); x < w; x += 6 * s) c.fillRect(x, 0, 1, h);
+      c.fillStyle = "rgba(170,215,255,0.11)";
+      for (let y = h * 0.66; y > 0; y -= 7 * s) c.fillRect(0, y, w, 1);
+    }
+  }
+  // ---------- the skyline each age adds behind the keep ----------
+  function eraSkyline(era, base, unit) {
+    if (era === 0) return;
+    const rnd = seeded(1000 + era * 17);
+    const spots = [0.04, 0.12, 0.2, 0.28, 0.72, 0.8, 0.88, 0.96];
+    spots.forEach((fx, i) => {
+      const x = fx * w + (rnd() - 0.5) * 20, k = 0.7 + rnd() * 0.6;
+      mainCtx.fillStyle = "#120d0a";
+      if (era === 1) {
+        // domes and bell towers
+        if (i % 2) {
+          const r = 14 * unit * k;
+          mainCtx.fillRect(x - r, base - r * 0.9, r * 2, r * 0.9);
+          mainCtx.beginPath();
+          mainCtx.arc(x, base - r * 0.9, r * 0.85, Math.PI, 0);
+          mainCtx.fill();
+          mainCtx.fillRect(x - 1, base - r * 2.1, 2, r * 0.5);
+        } else {
+          const ht = 50 * unit * k;
+          mainCtx.fillRect(x - 5 * unit, base - ht, 10 * unit, ht);
+          mainCtx.beginPath();
+          mainCtx.moveTo(x - 6 * unit, base - ht);
+          mainCtx.lineTo(x, base - ht - 14 * unit);
+          mainCtx.lineTo(x + 6 * unit, base - ht);
+          mainCtx.fill();
+          mainCtx.fillStyle = `rgba(255,214,140,${0.5 + Math.sin(t * 0.05 + i) * 0.2})`;
+          mainCtx.fillRect(x - 1.5 * unit, base - ht + 6 * unit, 3 * unit, 4 * unit);
+        }
+      } else if (era === 2) {
+        // factory sheds with sawtooth roofs, smokestacks, a water tower
+        const wd = 30 * unit * k, ht = 16 * unit * k;
+        mainCtx.fillRect(x - wd / 2, base - ht, wd, ht);
+        for (let j = 0; j < 3; j++) {
+          mainCtx.beginPath();
+          mainCtx.moveTo(x - wd / 2 + (j * wd) / 3, base - ht);
+          mainCtx.lineTo(x - wd / 2 + (j * wd) / 3, base - ht - 6 * unit);
+          mainCtx.lineTo(x - wd / 2 + ((j + 1) * wd) / 3, base - ht);
+          mainCtx.fill();
+        }
+        if (i % 2 === 0) {
+          const sx = x + wd * 0.3, sh = 46 * unit * k;
+          mainCtx.fillRect(sx - 2.5 * unit, base - sh, 5 * unit, sh);
+          for (let q = 0; q < 5; q++) {
+            const p = (t * 0.006 + q / 5 + i * 0.13) % 1;
+            mainCtx.fillStyle = `rgba(80,72,68,${0.3 * (1 - p)})`;
+            mainCtx.beginPath();
+            mainCtx.arc(sx + p * 30 * unit, base - sh - p * 50 * unit, (3 + p * 10) * unit, 0, Math.PI * 2);
+            mainCtx.fill();
+          }
+          mainCtx.fillStyle = "#120d0a";
+        } else {
+          const tx0 = x - wd * 0.3;
+          mainCtx.fillRect(tx0 - 1, base - 34 * unit, 1.5, 34 * unit);
+          mainCtx.fillRect(tx0 + 8 * unit, base - 34 * unit, 1.5, 34 * unit);
+          mainCtx.fillRect(tx0 - 3 * unit, base - 46 * unit, 14 * unit, 12 * unit);
+        }
+        mainCtx.fillStyle = `rgba(255,140,60,${0.35 + Math.random() * 0.1})`; // furnace light
+        mainCtx.fillRect(x - 3 * unit, base - 5 * unit, 6 * unit, 5 * unit);
+      } else {
+        // towers of glass, lit floor by floor, with aviation lights
+        const wd = (12 + rnd() * 10) * unit, ht = (60 + rnd() * 70) * unit * k;
+        mainCtx.fillStyle = "#0e1118";
+        mainCtx.fillRect(x - wd / 2, base - ht, wd, ht);
+        for (let fy = base - ht + 4 * unit; fy < base - 4; fy += 5 * unit)
+          for (let fx2 = x - wd / 2 + 2 * unit; fx2 < x + wd / 2 - 2 * unit; fx2 += 4 * unit) {
+            const on = Math.sin(fx2 * 12.9 + fy * 78.2 + i) > 0.1;
+            if (!on) continue;
+            mainCtx.fillStyle = (fx2 + fy) % 3 < 1 ? "rgba(255,214,150,0.55)" : "rgba(200,230,255,0.45)";
+            mainCtx.fillRect(fx2, fy, 2 * unit, 2.4 * unit);
+          }
+        const blink = Math.sin(t * 0.08 + i * 2) > 0.6;
+        if (blink) {
+          mainCtx.fillStyle = "rgba(255,60,50,0.95)";
+          mainCtx.beginPath();
+          mainCtx.arc(x, base - ht - 3 * unit, 1.8 * unit, 0, Math.PI * 2);
+          mainCtx.fill();
+        }
+        mainCtx.fillStyle = "#0e1118";
+        mainCtx.fillRect(x - 0.5, base - ht - 10 * unit, 1, 10 * unit);
+      }
+    });
+  }
+  // ---------- the keeps of past lives, faint on the far hills ----------
+  const ghostLayer = document.createElement("canvas");
+  const gctx = ghostLayer.getContext("2d");
+  function drawGhostKeeps(base, cs) {
+    const past = S.pastLives || [];
+    if (!past.length) return;
+    if (ghostLayer.width !== w || ghostLayer.height !== h) {
+      ghostLayer.width = w;
+      ghostLayer.height = h;
+    } else gctx.clearRect(0, 0, w, h);
+    const keep = C, prev = ctx;
+    ctx = gctx;
+    past.slice(-6).forEach((life, i) => {
+      const side = i % 2 ? 1 : -1, step = Math.floor(i / 2);
+      C = { cx: w / 2 + side * w * (0.3 + step * 0.11), by: base - h * (0.035 + step * 0.012), s: cs * (0.42 - step * 0.06), t };
+      TIER_ART[Math.max(0, Math.min(TIER_ART.length - 1, (life.tier || 6) - 1))].draw(t);
+    });
+    pendingWins = [];
+    ctx = prev;
+    C = keep;
+    gctx.save();
+    gctx.globalCompositeOperation = "source-atop";
+    gctx.fillStyle = "#9aa8d8";
+    gctx.fillRect(0, 0, w, h);
+    gctx.restore();
+    mainCtx.save();
+    mainCtx.globalAlpha = 0.1 + Math.sin(t * 0.01) * 0.02;
+    mainCtx.drawImage(ghostLayer, 0, 0);
+    mainCtx.restore();
+  }
+  // ---------- the gate stone: one mark for every keep, yours included ----------
+  function drawGateStone(cx, by, cs) {
+    const x = cx - 34 * cs, y = by + 14 * cs, u = cs;
+    mainCtx.fillStyle = "rgba(0,0,0,0.4)";
+    mainCtx.beginPath();
+    mainCtx.ellipse(x, y + 1, 9 * u, 2 * u, 0, 0, Math.PI * 2);
+    mainCtx.fill();
+    mainCtx.fillStyle = "#1c1611";
+    mainCtx.beginPath();
+    mainCtx.moveTo(x - 7 * u, y);
+    mainCtx.lineTo(x - 6 * u, y - 13 * u);
+    mainCtx.quadraticCurveTo(x, y - 17 * u, x + 6 * u, y - 13 * u);
+    mainCtx.lineTo(x + 7 * u, y);
+    mainCtx.fill();
+    const marks = 11 + (S.lives || 1);
+    const cols = Math.min(marks, 20);
+    for (let i = 0; i < Math.min(marks, 30); i++) {
+      const row = Math.floor(i / cols), col = i % cols;
+      const mx = x - 5 * u + (col * 10 * u) / Math.max(1, cols - 1) * 0.98;
+      const my = y - 12 * u + row * 5 * u;
+      const newest = i === marks - 1;
+      mainCtx.fillStyle = newest ? `rgba(255,214,150,${0.7 + Math.sin(t * 0.06) * 0.25})` : "rgba(200,180,150,0.45)";
+      mainCtx.fillRect(mx, my, Math.max(1, 0.5 * u), 4 * u);
+    }
   }
   function glowAt(x, y, r, color) {
     const { cx, by, s } = C;
@@ -1240,6 +1465,18 @@ let cityHover = null; // building under the pointer, lit up on the canvas
     ctx.fillRect(gx - rr, gy - rr, rr * 2, rr * 2);
   }
   function tWindows(list, color, seed) {
+    if (color === "#ffbe74") {
+      const [r, g, b] = ERAS[eraIdx()].win;
+      color = `rgb(${r},${g},${b})`;
+    }
+    if (ctx !== mainCtx) {
+      list.forEach(([wx, wy], i) => {
+        const f = 0.55 + Math.sin(t * 0.07 + i * 1.9 + seed) * 0.2 + Math.sin(t * 0.29 + i + seed) * 0.07;
+        const m = color.match(/\d+/g) || [255, 190, 110];
+        pendingWins.push([tx(wx - 1.2), ty(wy), 2.4 * T.u, 3.4 * T.u, `rgba(${m[0]},${m[1]},${m[2]},${f})`, color]);
+      });
+      return;
+    }
     ctx.save();
     ctx.shadowColor = color;
     ctx.shadowBlur = 6;
@@ -1575,6 +1812,25 @@ let cityHover = null; // building under the pointer, lit up on the canvas
     });
     if (marenHere()) drawMaren();
   }
+  function drawStreetLamps() {
+    const era = eraIdx(), u = Math.max(0.7, Math.min(w, h) / 300) * 0.8;
+    const col = era >= 3 ? [205, 232, 255] : [255, 210, 130];
+    [[0.18, 0.86], [0.43, 0.86], [0.57, 0.86], [0.8, 0.86], [0.04, 0.73], [0.36, 0.73], [0.64, 0.73], [0.96, 0.73]].forEach(([fx, fy], i) => {
+      const x = fx * w, y = fy * h, ht = 20 * u;
+      mainCtx.fillStyle = "#15110d";
+      mainCtx.fillRect(x - 0.6 * u, y - ht, 1.2 * u, ht);
+      if (era >= 3) mainCtx.fillRect(x - 0.6 * u, y - ht, 5 * u, 1.2 * u);
+      const lx = era >= 3 ? x + 4.5 * u : x, ly = y - ht - (era >= 3 ? -1 * u : 2 * u);
+      const f = era >= 3 ? 1 : 0.85 + Math.sin(t * 0.3 + i) * 0.08 + Math.random() * 0.05;
+      const g = mainCtx.createRadialGradient(lx, ly, 0, lx, ly, 22 * u);
+      g.addColorStop(0, `rgba(${col[0]},${col[1]},${col[2]},${0.35 * f})`);
+      g.addColorStop(1, "transparent");
+      mainCtx.fillStyle = g;
+      mainCtx.fillRect(lx - 22 * u, ly - 22 * u, 44 * u, 44 * u);
+      mainCtx.fillStyle = `rgba(${col[0]},${col[1]},${col[2]},${0.95 * f})`;
+      mainCtx.fillRect(lx - 1.4 * u, ly - 1.4 * u, 2.8 * u, 2.8 * u);
+    });
+  }
   // Old Maren: a hunched cloaked figure, a cane, a lantern and her goat
   function drawMaren() {
     const p = plotGeom("maren", w, h);
@@ -1718,7 +1974,9 @@ let cityHover = null; // building under the pointer, lit up on the canvas
     halo.addColorStop(1, "transparent");
     ctx.fillStyle = halo;
     ctx.fillRect(w / 2 - 210 * cs, h * 0.66 - 280 * cs, 420 * cs, 300 * cs);
-    drawCastle(w / 2, h * 0.66, cs, t);
+    drawGhostKeeps(h * 0.66, cs);
+    eraSkyline(eraIdx(), h * 0.665, Math.max(0.7, Math.min(w, h) / 300) * 0.8);
+    eraPaint(() => drawCastle(w / 2, h * 0.66, cs, t), cs);
     // Ground
     const gr = ctx.createLinearGradient(0, h * 0.65, 0, h);
     gr.addColorStop(0, "#120d08");
@@ -1733,8 +1991,10 @@ let cityHover = null; // building under the pointer, lit up on the canvas
     ctx.fillRect(w / 2 - 170 * cs, h * 0.6, 340 * cs, 200 * cs);
     // workers, guards, smoke, torches, sparks
     updateLife(t);
+    drawGateStone(w / 2, h * 0.66, cs);
     // the rest of the city, back row first
-    drawTown();
+    eraPaint(() => drawTown(), Math.max(0.7, Math.min(w, h) / 300) * 0.8);
+    if (eraIdx() >= 2) drawStreetLamps();
     // Drifting fog
     for (let i = 0; i < 3; i++) {
       const fx = (Math.sin(t * 0.0012 + i * 2.1) * 0.35 + 0.5) * w;
@@ -7099,7 +7359,7 @@ function renderAltar() {
       <div class="modal-icon">\u{1F3F0}</div>
       <div>
         <div class="modal-title">${CASTLE_TIERS[castleTier() - 1]}</div>
-        <div class="modal-sub">Castle Lv ${L} of ${CASTLE_MAX}  -  Life ${roman(S.lives || 1)}${L < CASTLE_MAX ? `  -  ${next - S.totalLevels} building levels to Lv ${L + 1}` : ""}</div>
+        <div class="modal-sub">Castle Lv ${L} of ${CASTLE_MAX}  -  Life ${roman(S.lives || 1)}, ${ERAS[eraIdx()].name}${L < CASTLE_MAX ? `  -  ${next - S.totalLevels} building levels to Lv ${L + 1}` : ""}</div>
       </div>
     </div>
     <div class="altar-echoes"><span>\u{2728}</span><b>${S.echoes || 0}</b> Memory Shards<small>${S.echoesEarned || 0} earned across all lives</small></div>
@@ -7149,6 +7409,7 @@ function rebirth() {
   if (gain <= 0) return;
   S.echoes = (S.echoes || 0) + gain;
   S.echoesEarned = (S.echoesEarned || 0) + gain;
+  S.pastLives = [...(S.pastLives || []), { tier: castleTier(), life: S.lives || 1 }];
   S.lives = (S.lives || 1) + 1;
   const f = memRank("foundations"), st = memRank("stores");
   BDATA.forEach((b) => (S.buildings[b.id] = { level: 0, upgrading: false, timer: 0, timerMax: 0 }));
@@ -7174,7 +7435,7 @@ function rebirth() {
   saveGame(true);
   // the castle's rebuild animation plays from the old tier down to the ruin
   $("lu-lv").textContent = `LIFE ${roman(S.lives)}`;
-  $("lu-msg").textContent = `The city falls, and remembers. +${gain} Memory Shards. ${LORE[Math.min(LORE.length - 1, 13)]}`;
+  $("lu-msg").textContent = `The city falls, and remembers. +${gain} Memory Shards. It will rise again in the ${ERAS[eraIdx()].name}. ${LORE[Math.min(LORE.length - 1, 13)]}`;
   $("lu-unlocks").innerHTML = `<div class="altar-echoes small"><span>\u{2728}</span><b>${S.echoes}</b> Memory Shards to spend at the Altar</div>`;
   $("levelup").classList.add("open");
   burst(window.innerWidth / 2, window.innerHeight * 0.4, "#c9b6e8", 40);

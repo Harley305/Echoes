@@ -7573,6 +7573,48 @@ function measureTopbar() {
 window.addEventListener("resize", measureTopbar);
 setTimeout(measureTopbar, 0);
 // ==============================================================
+// FULL SCREEN  -  a top-bar button where the browser allows it
+//   (desktop, Android, iPad). iPhone Safari has no full-screen API,
+//   so there the button stays hidden; the home-screen app is the way.
+// ==============================================================
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+function fsSupported() {
+  const d = document.documentElement;
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  return !standalone && !!(d.requestFullscreen || d.webkitRequestFullscreen) && (document.fullscreenEnabled || document.webkitFullscreenEnabled);
+}
+function toggleFullscreen() {
+  const d = document.documentElement;
+  try {
+    if (fsEl()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    else {
+      const p = (d.requestFullscreen || d.webkitRequestFullscreen).call(d, { navigationUI: "hide" });
+      if (p && p.catch) p.catch(() => notify("Full screen isn't allowed here. Try your browser's own full-screen option.", "error"));
+    }
+  } catch (e) {
+    notify("Full screen isn't allowed here. Try your browser's own full-screen option.", "error");
+  }
+}
+function updateFsBtn() {
+  const b = $("fs-btn");
+  if (!b) return;
+  const ok = fsSupported();
+  b.hidden = !ok;
+  document.body.classList.toggle("has-fs", ok);
+  b.innerHTML = fsEl() ? `\u{2715}<span class="tb-lb"> Exit full screen</span>` : `\u{26F6}<span class="tb-lb"> Full screen</span>`;
+  b.title = fsEl() ? "Exit full screen (F)" : "Full screen (F)";
+}
+["fullscreenchange", "webkitfullscreenchange"].forEach((ev) =>
+  document.addEventListener(ev, () => {
+    updateFsBtn();
+    measureTopbar();
+  })
+);
+document.addEventListener("keydown", (e) => {
+  if ((e.key === "f" || e.key === "F") && !e.metaKey && !e.ctrlKey && !/INPUT|TEXTAREA/.test(document.activeElement.tagName) && fsSupported()) toggleFullscreen();
+});
+updateFsBtn();
+// ==============================================================
 // INIT
 // ==============================================================
 if (loadGame()) {

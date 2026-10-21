@@ -1333,3 +1333,21 @@ align-items:center;justify-content:center;padding:20px;
 .bnode.npc .bnode-plate{border-style:solid;background:#120e16d9}
 .bnode.npc.fresh .bnode-plate{border-color:var(--bc);animation:pulse-gold 1.8s infinite}
 .bnode.npc.fresh .bnode-icon{animation:readyBob 1.2s ease-in-out infinite;display:inline-block}
+
+/* ================================================================
+   SAVE & BACKUP menu
+   ================================================================ */
+.sv-row{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.sv-row .mbtn{flex:1;min-width:130px;text-align:center}
+.sv-code{width:100%;margin:6px 0;padding:8px 10px;border-radius:3px;border:1px solid #3a3428;background:#00000055;color:#c8bba4;font-family:ui-monospace,Menlo,monospace;font-size:11px;resize:vertical;word-break:break-all}
+.sv-code:focus{outline:none;border-color:var(--goldb)}
+.sv-file{position:relative;overflow:hidden;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.sv-file input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.sv-confirm{font-size:13px;color:#d8cdb8;line-height:1.5;padding:10px 12px;border:1px solid #e8907c66;border-radius:3px;background:#e8907c12}
+.sv-confirm b{color:var(--gold);font-weight:400}
+.sv-msg{margin-top:12px;font-size:12px;color:var(--green);font-style:italic}
+/* installed app: keep clear of the notch and home indicator */
+@supports(padding:env(safe-area-inset-top)){
+  #topbar{padding-top:env(safe-area-inset-top)}
+  #castle-prog{padding-bottom:calc(5px + env(safe-area-inset-bottom))}
+}

@@ -22,14 +22,18 @@ No build step and no dependencies: open `index.html` in a browser. Progress save
 - **Research and Rebirth.** Archive research, plus Echo Rebirth with permanent Memories.
 - **Gear and the Iron Forge** *(new).* Each hero has weapon, armor and charm slots. You can forge gear (rarity is rolled), pay extra for a Masterwork, salvage pieces you don't want, and loot drops from raids, elites and bosses. Legendaries carry perks: Bloodecho, Bulwark and Quickened.
 - **Bounties** *(new).* Three daily and three weekly jobs, one reroll a day, and a bonus cache for finishing a full set.
+- **Backup & install** *(new).* The Save menu copies your city as a save code or downloads it as a file, and restores it on any device. On phones, add it to your home screen to play full screen and offline.
 - **Extras.** Daily login rewards and procedural music and sound effects.
 
 ## Project layout
 
 ```
-index.html   markup and overlays
-style.css    all styling
-script.js    game logic, organized in banner-commented sections
+index.html             markup and overlays
+style.css              all styling
+script.js              game logic, organized in banner-commented sections
+manifest.webmanifest   app install info (name, icons, colors)
+sw.js                  service worker: offline play and home-screen install
+icons/                 app and browser icons
 ```
 
 ## Save compatibility

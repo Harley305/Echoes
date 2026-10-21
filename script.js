@@ -7171,7 +7171,9 @@ const MIGRATIONS = {
   1: (d) => {} // stamps unversioned saves as v1
 };
 let saveWarned = false;
+let restoring = false; // set while a backup is being loaded, so nothing overwrites it
 function saveGame(silent) {
+  if (restoring) return false;
   try {
     S.lastSeen = Date.now();
     S.v = SAVE_VERSION;
@@ -7255,6 +7257,151 @@ function loadGame() {
   Object.assign(S, data);
   return true;
 }
+// ==============================================================
+// BACKUP & RESTORE  -  carry a save to another device or browser.
+//   A save code is the save itself, base64-encoded with a prefix.
+// ==============================================================
+const CODE_PREFIX = "ECHOES1:";
+function saveCode() {
+  saveGame(true);
+  const bytes = new TextEncoder().encode(localStorage.getItem(SAVE_KEY) || "");
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return CODE_PREFIX + btoa(bin);
+}
+// returns the save object, or null if the text isn't a valid Echoes save
+function parseBackup(text) {
+  text = (text || "").trim();
+  try {
+    let json = text;
+    if (text.startsWith(CODE_PREFIX)) {
+      const bin = atob(text.slice(CODE_PREFIX.length).replace(/\s+/g, ""));
+      json = new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
+    }
+    const d = JSON.parse(json);
+    return d && typeof d === "object" && Array.isArray(d.heroes) && d.buildings && d.res ? d : null;
+  } catch (e) {
+    return null;
+  }
+}
+const backupSummary = (d) => `Castle Lv ${d.castleLevel || 1}, Life ${roman(d.lives || 1)}, ${(d.heroes || []).map((h) => `${h.name} Lv ${h.level}`).join(", ")}`;
+let pendingRestore = null;
+function openSaveMenu() {
+  saveGame(true);
+  pendingRestore = null;
+  renderSaveMenu();
+  $("modal").classList.add("open");
+}
+function renderSaveMenu(msg = "") {
+  const box = $("modal-box");
+  box.style.setProperty("--bc", "#7aca8a");
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  box.innerHTML = `
+    <div class="modal-head">
+      <div class="modal-icon">\u{1F4BE}</div>
+      <div>
+        <div class="modal-title">Save & Backup</div>
+        <div class="modal-sub">Saved automatically every 30 seconds, in this browser only</div>
+      </div>
+    </div>
+    <div class="sv-row"><button class="mbtn mbtn-gold" onclick="saveGame();renderSaveMenu('Saved.')">\u{1F4BE} Save now</button></div>
+    <div class="section-label" style="margin-top:14px">Back up</div>
+    <div class="altar-note">Keep a copy somewhere safe, or move your city to another device: copy the code, or download the file.</div>
+    <div class="sv-row">
+      <button class="mbtn mbtn-ghost" onclick="copySaveCode()">\u{1F4CB} Copy save code</button>
+      <button class="mbtn mbtn-ghost" onclick="downloadSave()">\u{2B07}\u{FE0F} Download file</button>
+    </div>
+    <div class="section-label" style="margin-top:14px">Restore</div>
+    ${pendingRestore
+      ? `<div class="sv-confirm">Replace this city with <b>${backupSummary(pendingRestore)}</b>? Your current progress here will be overwritten.
+          <div class="sv-row"><button class="mbtn mbtn-ghost" onclick="pendingRestore=null;renderSaveMenu()">Cancel</button><button class="mbtn mbtn-danger" onclick="applyRestore()">Replace and reload</button></div></div>`
+      : `<textarea id="sv-code" class="sv-code" placeholder="Paste a save code here" rows="3"></textarea>
+        <div class="sv-row">
+          <button class="mbtn mbtn-ghost" onclick="restoreFromText($('sv-code').value)">Load code</button>
+          <label class="mbtn mbtn-ghost sv-file">\u{1F4C2} Open file<input type="file" accept=".json,.txt,application/json,text/plain" onchange="restoreFromFile(this.files[0])"></label>
+        </div>`}
+    ${standalone ? "" : `<div class="section-label" style="margin-top:14px">Play like an app</div>
+      <div class="altar-note">${installPrompt
+        ? `Install Echoes to your home screen. It opens full screen and works offline.</div><div class="sv-row"><button class="mbtn mbtn-ghost" onclick="installApp()">\u{1F4F2} Install Echoes</button></div>`
+        : ios
+        ? `On iPhone or iPad: open this page in Safari, tap the Share button, then <b>Add to Home Screen</b>.</div>`
+        : `In Chrome or Edge, use the install icon in the address bar, or the menu's <b>Install app</b> / <b>Add to Home screen</b>.</div>`}`}
+    ${msg ? `<div class="sv-msg">${msg}</div>` : ""}
+    <div class="modal-actions"><button class="mbtn mbtn-ghost" onclick="closeModal()">\u{2715} Close</button></div>`;
+}
+function copySaveCode() {
+  const code = saveCode();
+  const done = () => renderSaveMenu(`Save code copied (${Math.round(code.length / 1024)} KB). Paste it into a note or message to keep it.`);
+  if (navigator.clipboard && window.isSecureContext)
+    navigator.clipboard.writeText(code).then(done, () => showCodeFallback(code));
+  else showCodeFallback(code);
+}
+// clipboard blocked: show the code so it can be copied by hand
+function showCodeFallback(code) {
+  renderSaveMenu("Copy this code by hand (it's already selected):");
+  const ta = document.createElement("textarea");
+  ta.className = "sv-code";
+  ta.rows = 4;
+  ta.readOnly = true;
+  ta.value = code;
+  $("modal-box").querySelector(".sv-msg").after(ta);
+  ta.select();
+}
+function downloadSave() {
+  saveGame(true);
+  const blob = new Blob([localStorage.getItem(SAVE_KEY) || ""], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `echoes-save-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    URL.revokeObjectURL(a.href);
+    a.remove();
+  }, 1000);
+  renderSaveMenu("Save file downloaded.");
+}
+function restoreFromText(text) {
+  const d = parseBackup(text);
+  if (!d) return renderSaveMenu("That doesn't look like an Echoes save. Check that the whole code was pasted.");
+  pendingRestore = d;
+  renderSaveMenu();
+}
+function restoreFromFile(file) {
+  if (!file) return;
+  file.text().then(restoreFromText, () => renderSaveMenu("Couldn't read that file."));
+}
+function applyRestore() {
+  if (!pendingRestore) return;
+  try {
+    // keep the current city as a backup in case the restore was a mistake
+    localStorage.setItem(SAVE_KEY + "-before-restore", localStorage.getItem(SAVE_KEY) || "");
+    localStorage.setItem(SAVE_KEY, JSON.stringify(pendingRestore));
+    localStorage.removeItem(BACKUP_KEY);
+  } catch (e) {
+    return renderSaveMenu("This browser wouldn't store the save (storage blocked or full).");
+  }
+  restoring = true;
+  location.reload();
+}
+// ---------- install as an app ----------
+let installPrompt = null;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  installPrompt = e;
+});
+function installApp() {
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  installPrompt.userChoice.finally(() => {
+    installPrompt = null;
+    renderSaveMenu();
+  });
+}
+// offline support and home-screen install, on the real site only
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && window.top === window)
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 // ==============================================================
 // INIT
 // ==============================================================

@@ -2397,6 +2397,7 @@ function closeModal() {
   S.selectedBuilding = null;
   $("modal").classList.remove("open");
   renderBmap();
+  if (welcomeOpen) startFresh();
 }
 function doUpgrade(id) {
   const b = BDATA.find((x) => x.id === id);
@@ -7432,6 +7433,7 @@ function parseBackup(text) {
 const backupSummary = (d) => `Castle Lv ${d.castleLevel || 1}, Life ${roman(d.lives || 1)}, ${(d.heroes || []).map((h) => `${h.name} Lv ${h.level}`).join(", ")}`;
 let pendingRestore = null;
 function openSaveMenu() {
+  welcomeOpen = false;
   saveGame(true);
   pendingRestore = null;
   renderSaveMenu();
@@ -7470,7 +7472,8 @@ function renderSaveMenu(msg = "") {
       <div class="altar-note">${installPrompt
         ? `Install Echoes to your home screen. It opens full screen and works offline.</div><div class="sv-row"><button class="mbtn mbtn-ghost" onclick="installApp()">\u{1F4F2} Install Echoes</button></div>`
         : ios
-        ? `On iPhone or iPad: open this page in Safari, tap the Share button, then <b>Add to Home Screen</b>.</div>`
+        ? `On iPhone or iPad: open this page in Safari, tap the Share button, then <b>Add to Home Screen</b>.</div>
+          <div class="sv-warn">\u{26A0}\u{FE0F} The home-screen app starts with its own empty save. <b>Copy your save code first</b>, then paste it into the app when it opens.</div>`
         : `In Chrome or Edge, use the install icon in the address bar, or the menu's <b>Install app</b> / <b>Add to Home screen</b>.</div>`}`}
     ${msg ? `<div class="sv-msg">${msg}</div>` : ""}
     <div class="modal-actions"><button class="mbtn mbtn-ghost" onclick="closeModal()">\u{2715} Close</button></div>`;
@@ -7509,13 +7512,13 @@ function downloadSave() {
 }
 function restoreFromText(text) {
   const d = parseBackup(text);
-  if (!d) return renderSaveMenu("That doesn't look like an Echoes save. Check that the whole code was pasted.");
+  if (!d) return renderRestoreUI("That doesn't look like an Echoes save. Check that the whole code was pasted.");
   pendingRestore = d;
-  renderSaveMenu();
+  renderRestoreUI();
 }
 function restoreFromFile(file) {
   if (!file) return;
-  file.text().then(restoreFromText, () => renderSaveMenu("Couldn't read that file."));
+  file.text().then(restoreFromText, () => renderRestoreUI("Couldn't read that file."));
 }
 function applyRestore() {
   if (!pendingRestore) return;
@@ -7525,10 +7528,51 @@ function applyRestore() {
     localStorage.setItem(SAVE_KEY, JSON.stringify(pendingRestore));
     localStorage.removeItem(BACKUP_KEY);
   } catch (e) {
-    return renderSaveMenu("This browser wouldn't store the save (storage blocked or full).");
+    return renderRestoreUI("This browser wouldn't store the save (storage blocked or full).");
   }
   restoring = true;
   location.reload();
+}
+// ---------- first run with no save: offer to bring a city in ----------
+// Shown automatically when the installed app opens empty (iPhone and iPad give
+// the home-screen app its own storage), and from "Restore a save" on the title screen.
+let welcomeOpen = false;
+const renderRestoreUI = (msg) => (welcomeOpen ? renderWelcome(msg) : renderSaveMenu(msg));
+const isStandalone = () => window.matchMedia("(display-mode: standalone)").matches || !!navigator.standalone;
+function openWelcome() {
+  welcomeOpen = true;
+  pendingRestore = null;
+  renderWelcome();
+  $("modal").classList.add("open");
+}
+function renderWelcome(msg = "") {
+  const box = $("modal-box");
+  box.style.setProperty("--bc", "#c8a97e");
+  box.innerHTML = `
+    <div class="modal-head">
+      <div class="modal-icon">\u{1F3F0}</div>
+      <div>
+        <div class="modal-title">Bring your city?</div>
+        <div class="modal-sub">${isStandalone() ? "This app keeps its own save, separate from your browser" : "Continue a city from another device or browser"}</div>
+      </div>
+    </div>
+    <div class="altar-note">Already playing somewhere else? In that game, open <b>\u{1F4BE} Save</b> and tap <b>Copy save code</b> (or <b>Download file</b>), then bring it here.</div>
+    ${pendingRestore
+      ? `<div class="sv-confirm">Load <b>${backupSummary(pendingRestore)}</b>?
+          <div class="sv-row"><button class="mbtn mbtn-ghost" onclick="pendingRestore=null;renderWelcome()">Back</button><button class="mbtn mbtn-gold" onclick="applyRestore()">Load this city</button></div></div>`
+      : `<textarea id="sv-code" class="sv-code" placeholder="Paste a save code here" rows="3"></textarea>
+        <div class="sv-row">
+          <button class="mbtn mbtn-ghost" onclick="restoreFromText($('sv-code').value)">Load code</button>
+          <label class="mbtn mbtn-ghost sv-file">\u{1F4C2} Open file<input type="file" accept=".json,.txt,application/json,text/plain" onchange="restoreFromFile(this.files[0])"></label>
+        </div>`}
+    ${msg ? `<div class="sv-msg">${msg}</div>` : ""}
+    <div class="modal-actions"><button class="mbtn mbtn-gold" onclick="startFresh()">\u{2728} Start a new city</button></div>`;
+}
+function startFresh() {
+  welcomeOpen = false;
+  pendingRestore = null;
+  $("modal").classList.remove("open");
+  if (!S.champion) openForge();
 }
 // ---------- install as an app ----------
 let installPrompt = null;
@@ -7617,7 +7661,9 @@ updateFsBtn();
 // ==============================================================
 // INIT
 // ==============================================================
-if (loadGame()) {
+const HAD_SAVE = loadGame();
+if (!HAD_SAVE && $("splash-restore")) $("splash-restore").hidden = false;
+if (HAD_SAVE) {
   migrateSave();
   if (S.trip && Object.keys(S.trip).length) {
     Object.entries(S.trip).forEach(([k, v]) => addCapped(S.res, k, v));
@@ -7650,13 +7696,15 @@ window.addEventListener("pagehide", () => saveGame(true));
 // ==============================================================
 // TITLE / SPLASH SCREEN
 // ==============================================================
-function closeSplash() {
+function closeSplash(restore) {
   const splash = $("splash");
   splash.classList.add("closed");
   setTimeout(() => {
     splash.style.display = "none";
     if (!S.champion) {
-      openForge();
+      // the installed app opening empty almost always means a city left behind in the browser
+      if (restore === true || (!HAD_SAVE && isStandalone())) openWelcome();
+      else openForge();
       return;
     }
     if (S.awayTrip) {

@@ -1396,3 +1396,9 @@ align-items:center;justify-content:center;padding:20px;
 @media(max-width:560px){body.has-fs #castle-badge{grid-column:span 1;font-size:9px;padding-left:2px;padding-right:2px}}
 .top-fs{border:1px solid #c8a97e44;color:var(--gold);background:linear-gradient(180deg,#1c1610,#0d0b08)}
 .top-fs:hover{border-color:var(--goldb);box-shadow:0 0 10px var(--goldf)}
+/* restoring a city on a new device */
+.sv-warn{font-size:12px;color:#e8c07c;line-height:1.5;margin:6px 0 4px;padding:8px 10px;border:1px solid #e8c07c44;border-radius:3px;background:#e8c07c10}
+.sv-warn b{font-weight:600}
+.splash-restore{display:block;margin:12px auto 0;background:none;border:none;color:#8a7d68;font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;cursor:pointer;text-decoration:underline;text-underline-offset:4px}
+.splash-restore:hover{color:var(--gold)}
+.splash-restore[hidden]{display:none}

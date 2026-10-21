@@ -1351,3 +1351,15 @@ align-items:center;justify-content:center;padding:20px;
   #topbar{padding-top:env(safe-area-inset-top)}
   #castle-prog{padding-bottom:calc(5px + env(safe-area-inset-bottom))}
 }
+
+/* ================================================================
+   POLISH PASS: auto-battle, trading post, raid strength
+   ================================================================ */
+.bt-auto{position:absolute;top:62px;left:14px;z-index:121;font-family:'Cinzel',serif;font-size:9px;letter-spacing:1.5px;padding:6px 11px;border-radius:2px;border:1px solid #c8a97e55;background:#0b0907cc;color:#a8998a;cursor:pointer;transition:all .2s}
+.bt-auto:hover{border-color:var(--gold);color:var(--gold)}
+.bt-auto.on{border-color:var(--green);color:var(--green);background:#0f1a10cc;box-shadow:0 0 12px #7aca8a33}
+@media(max-width:560px){.bt-auto{top:auto;bottom:calc(var(--cmdh,210px) + 46px);left:auto;right:10px}}
+.tr-row{display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #ffffff08}
+.tr-what{flex:1;font-size:15px}
+.tr-what small{display:block;font-family:'Cinzel',serif;font-size:9px;letter-spacing:.5px;color:#8a7d68}
+.raid-str{margin-left:6px;color:#e8907c;font-family:'Cinzel',serif;font-size:9px}

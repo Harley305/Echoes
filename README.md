@@ -15,6 +15,7 @@ No build step and no dependencies: open `index.html` in a browser. Progress save
 - **City.** 15 buildings across 10 castle tiers, offline progress, and buildings that can be pushed past their max level.
 - **A living city screen** *(new).* The buildings are drawn into the scene around the keep, in rows from the horizon to the foreground. They grow as they level, show scaffolding while upgrading, and glow when selected. Floating nameplates show each building's level and when an upgrade is affordable.
 - **Champion.** Forge your lead hero by picking a class, an origin and attribute points.
+- **Auto-battle** *(new).* Toggle Auto in any fight and the party plays itself, faster: it heals, revives, hunts weaknesses and spends Surge.
 - **Combat.** Turn-based battles with hidden weaknesses, ward breaks and Surge.
 - **World map.** Explore in 2D or 2.5D isometric view, with ruins, keys, chests and a world boss.
 - **Descents.** Hades-style runs: pick a route, collect boons, visit shrines, markets and events, then extract early or push for the boss and the Endless Descent.

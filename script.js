@@ -16,7 +16,7 @@ const BDATA = [
       { s: 400, w: 300, e: 80, t: 35 },
       { s: 800, w: 600, e: 200, t: 70 }
     ],
-    bonuses: ["Start", "Unlocks Barracks & Farm", "+1 Builder slot", "Unlocks Archive & Tower", "Max troops +50"]
+    bonuses: ["+0.3 essence/s", "+0.5 essence/s", "+0.7 essence/s, builders 10% faster", "+0.9 essence/s", "+1.1 essence/s, max troops +50"]
   },
   {
     id: "barracks", name: "Barracks", icon: "\u{2694}\u{FE0F}", color: "#e8907c",
@@ -64,7 +64,7 @@ const BDATA = [
       { s: 500, w: 400, e: 180, t: 55 },
       { s: 1000, w: 800, e: 400, t: 110 }
     ],
-    bonuses: ["+1 essence/s", "Lore fragments revealed", "+3 essence/s", "Secret chapters unlock"]
+    bonuses: ["+1 essence/s, research", "Tier 2 research", "+3 essence/s, tier 3 research", "Expeditions find echoes 25% more often"]
   },
   {
     id: "market", name: "Shadow Market", icon: "\u{1F4B0}", color: "#e8d07c",
@@ -76,7 +76,7 @@ const BDATA = [
       { s: 420, w: 500, e: 130, t: 44 },
       { s: 850, w: 1000, e: 300, t: 95 }
     ],
-    bonuses: ["Resource trade active", "Trade ratios improve", "+20% all resources", "Rare essence trades"]
+    bonuses: ["Trading post: swap stone, wood and essence", "Better trade rates", "+20% all resources", "Rare trade: essence for relics"]
   },
   {
     id: "tower", name: "Void Tower", icon: "\u{1F5FC}", color: "#b8d4e8",
@@ -87,7 +87,7 @@ const BDATA = [
       { s: 500, w: 380, e: 200, t: 60 },
       { s: 1000, w: 750, e: 450, t: 130 }
     ],
-    bonuses: ["Reveals enemy raids early", "Scout enemy strength", "Predict raid outcomes"]
+    bonuses: ["Scouts: every foe's weaknesses are known", "Watchtower: +1 Surge to start every battle", "Raids pay 25% more"]
   },
   {
     id: "wall", name: "Ancient Wall", icon: "\u{1F9F1}", color: "#a09070",
@@ -98,7 +98,7 @@ const BDATA = [
       { s: 700, w: 450, e: 120, t: 52 },
       { s: 1400, w: 900, e: 300, t: 115 }
     ],
-    bonuses: ["+15% raid defense", "+30% defense", "Raid damage halved"]
+    bonuses: ["Heroes take 13% less damage", "Heroes take 23% less damage", "Heroes take 33% less damage"]
   },
   {
     id: "temple", name: "Pale Temple", icon: "\u{1F52E}", color: "#d8e8f0",
@@ -109,7 +109,7 @@ const BDATA = [
       { s: 900, w: 700, e: 350, t: 88 },
       { s: 1800, w: 1400, e: 800, t: 190 }
     ],
-    bonuses: ["+2 essence/s", "Heroes gain +20% XP", "Unlock hero special skills"]
+    bonuses: ["+2 essence/s", "Heroes gain +20% XP", "Each hero learns a special skill"]
   },
   {
     id: "forge", name: "Iron Forge", icon: "\u{2699}\u{FE0F}", color: "#e8a07c",
@@ -120,7 +120,7 @@ const BDATA = [
       { s: 800, w: 600, e: 280, t: 82 },
       { s: 1600, w: 1200, e: 650, t: 175 }
     ],
-    bonuses: ["Heroes +3 ATK", "Troops +10 power", "Forge legendary gear"]
+    bonuses: ["Heroes +3 ATK, forge gear", "Troops hit 10 harder", "Legendary gear can be forged"]
   },
   // ---- late buildings: one unlocks with each castle tier from 6 to 10 ----
   {
@@ -529,7 +529,8 @@ function bCost(b, lv) {
     const r = (v) => Math.min(cap, Math.round((v * g) / 10) * 10);
     c = { s: r(last.s), w: r(last.w), e: r(last.e), t: Math.round(last.t * Math.pow(1.3, k)) };
   }
-  return { ...c, t: Math.max(1, Math.round(c.t * (1 - 0.1 * memRank("masons")))) };
+  const keepFast = bLevel("keep") >= 3 ? 0.9 : 1;
+  return { ...c, t: Math.max(1, Math.round(c.t * (1 - 0.1 * memRank("masons")) * keepFast)) };
 }
 // levels past a building's original max ("overcharged" levels)
 const overLevels = () => BDATA.reduce((a, b) => a + Math.max(0, bLevel(b.id) - b.max), 0);
@@ -561,7 +562,7 @@ function bonusText(b, lv) {
   const per = { quarry: "stone", farm: "wood", archive: "essence", temple: "essence", barracks: "troop", echowell: "essence", reliquary: "relic" };
   if (per[b.id]) return `Overcharged: +${Math.round((Math.pow(1.35, k) - 1) * 100)}% ${per[b.id]} output`;
   if (b.id === "keep") return `Overcharged: max troops +${25 * k}`;
-  if (b.id === "wall") return `Overcharged: raid defense +${50 + 10 * k}%`;
+  if (b.id === "wall") return `Overcharged: heroes take ${Math.round((1 - 1 / (1.5 + 0.1 * k)) * 100)}% less damage`;
   if (b.id === "forge") return `Overcharged: heroes +${3 + 2 * k} ATK`;
   return `Overcharged: +${2 * k}% all production`;
 }
@@ -2034,7 +2035,8 @@ function getRates() {
   const m = prodMult();
   const sr = (1 + lvRate([3, 6, 10, 16], bLevel("quarry"))) * m;
   const wr = lvRate([2, 4, 7, 12], bLevel("farm")) * m;
-  const er = (lvRate([1, 1, 3, 3], bLevel("archive")) + lvRate([2, 2, 2], bLevel("temple")) + lvRate([4, 8, 14], bLevel("echowell"))) * m;
+  const keepEss = bLevel("keep") ? 0.1 + 0.2 * bLevel("keep") : 0; // a trickle from day one: the Archive is never out of reach
+  const er = (keepEss + lvRate([1, 1, 3, 3], bLevel("archive")) + lvRate([2, 2, 2], bLevel("temple")) + lvRate([4, 8, 14], bLevel("echowell"))) * m;
   const tr = lvRate([5, 12, 22, 40], bLevel("barracks"));
   const rr = lvRate([2, 4, 7], bLevel("reliquary")) / 60; // relics per second
   return { sr, wr, er, tr, rr };
@@ -2369,6 +2371,7 @@ function openBuildingModal(id) {
     ${reqHtml}
     ${id === "archive" ? researchHtml() : ""}
     ${id === "forge" ? forgeWorkshopHtml() : ""}
+    ${id === "market" ? tradeHtml() : ""}
     <div class="modal-actions">
       <button class="mbtn ${canAfford && !maxed && !bs.upgrading ? "mbtn-gold" : "mbtn-ghost"}" id="modal-upg-btn" ${maxed || bs.upgrading || !canAfford ? "disabled" : ""} onclick="doUpgrade('${id}')">${maxed ? "\u{2713} Maxed" : bs.upgrading ? "\u{23F3} Upgrading" : btnLabel}</button>
       <button class="mbtn mbtn-ghost" onclick="closeModal()">\u{2715} Close</button>
@@ -2625,7 +2628,7 @@ function renderHeroes(c) {
     <div class="divider"></div>
     ${equipmentHtml(S.selectedHero)}
     <div class="section-label">Skills  -  ${sel.name}</div>
-    ${(SKILLS[sel.id] || [])
+    ${heroSkills(sel.id)
       .map((s) => `<div class="skill-row"><div><b>${s.name}</b><span>${s.mp} MP</span></div>${s.desc}</div>`)
       .join("")}
     <div class="skill-hint">The highlighted hero receives quest and daily-reward XP. Tap a hero to manage their gear.</div>`;
@@ -2658,7 +2661,8 @@ function renderRaid(c) {
     const minTroops = RAID_MIN_TROOPS[i];
     const canRaid = troopCount >= minTroops && partyCount > 0;
     const diffColor = RAID_COLORS[i];
-    const rewardStr = Object.entries(e.reward).map(([k, v]) => `+${v} ${k}`).join(", ");
+    const ri = raidInfo(i);
+    const rewardStr = Object.entries(ri.reward).map(([k, v]) => `+${v} ${k}`).join(", ");
     html += `
       <div class="raid-card ${canRaid ? "" : "locked"}" style="--dc:${diffColor}">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
@@ -2669,7 +2673,7 @@ function renderRaid(c) {
           <span style="font-family:'Cinzel',serif;font-size:9px;color:${diffColor};border:1px solid ${diffColor}44;padding:2px 7px;border-radius:1px">${e.difficulty}</span>
         </div>
         <div class="raid-foes">${e.group.map((k) => `<span title="${ENEMY_TYPES[k].name}">${ENEMY_TYPES[k].icon}</span>`).join("")}<em>${e.group.length} foes</em></div>
-        <div style="font-size:10px;color:var(--green);margin-bottom:8px">${rewardStr}  -  +${e.xpReward} XP each</div>
+        <div style="font-size:10px;color:var(--green);margin-bottom:8px">${rewardStr}  -  +${ri.xp} XP each${ri.scale > 1 ? `<span class="raid-str">foes ${Math.round(ri.scale * 100)}% strength</span>` : ""}</div>
         <button class="raid-btn" ${canRaid ? `onclick="startRaid(${i})"` : "disabled"}>
           ${canRaid ? `\u{2694}\u{FE0F} RAID (${minTroops} troops)` : !partyCount ? `\u{1F9ED} Party away` : `\u{1F512} Need ${minTroops} troops`}
         </button>
@@ -2689,6 +2693,8 @@ function lootString(loot) {
   return Object.entries(loot).filter(([, v]) => v > 0).map(([k, v]) => `+${v} ${k}`).join(", ");
 }
 const regionById = (id) => REGIONS.find((r) => r.id === id);
+// Void Archive Lv 4 makes echoes 25% more likely
+const echoChance = (r) => Math.min(0.95, r.lore * (bLevel("archive") >= 4 ? 1.25 : 1));
 function rand(a, b) {
   return a + Math.floor(Math.random() * (b - a + 1));
 }
@@ -2706,7 +2712,7 @@ function rollExpedition(h, r) {
   });
   let lore = null;
   const unheard = LORE.map((_, i) => i).filter((i) => !S.lore.includes(i));
-  const chance = r.lore + (h.id === "mystic" ? 0.15 : 0);
+  const chance = echoChance(r) + (h.id === "mystic" ? 0.15 : 0);
   if (safe && unheard.length && Math.random() < chance) lore = unheard[0];
   return { safe, loot, lore, draught: safe && Math.random() < 0.2, xp: safe ? r.xp : Math.round(r.xp / 2) };
 }
@@ -2816,7 +2822,7 @@ function renderExplore(c) {
         <span class="raid-icon">${locked ? "\u{1F512}" : r.icon}</span>
         <div>
           <div class="region-name">${locked ? "???" : r.name}</div>
-          <div class="region-meta">${locked ? `Unlocks at Castle Lv ${r.unlock}` : `${danger}  -  ${Math.round(r.lore * 100)}% echo chance`}</div>
+          <div class="region-meta">${locked ? `Unlocks at Castle Lv ${r.unlock}` : `${danger}  -  ${Math.round(echoChance(r) * 100)}% echo chance`}</div>
         </div>
       </div>`;
     if (!locked) {
@@ -2880,19 +2886,24 @@ const SKILLS = {
   commander: [
     { id: "cleave", name: "Cleave", mp: 5, target: "allEnemies", type: "blade", desc: "Strike every enemy for 70%" },
     { id: "brand", name: "Brand Strike", mp: 6, target: "enemy", type: "fire", desc: "A burning blow for 150%" },
-    { id: "shieldwall", name: "Shield Wall", mp: 6, target: "self", desc: "Party takes half damage until your next turn", noSurge: true }
+    { id: "shieldwall", name: "Shield Wall", mp: 6, target: "self", desc: "Party takes half damage until your next turn", noSurge: true },
+    { id: "rally", name: "Rally", mp: 8, target: "self", desc: "Heal every ally 25% and give the others 3 MP", noSurge: true, temple: true }
   ],
   mystic: [
     { id: "rift", name: "Void Rift", mp: 7, target: "enemy", type: "void", desc: "200% damage that ignores armor" },
     { id: "hex", name: "Ember Hex", mp: 7, target: "allEnemies", type: "fire", desc: "Fire washes over every enemy for 60%" },
-    { id: "mend", name: "Mend", mp: 5, target: "ally", desc: "Heal an ally for 40% HP" }
+    { id: "mend", name: "Mend", mp: 5, target: "ally", desc: "Heal an ally for 40% HP" },
+    { id: "starfall", name: "Starfall", mp: 12, target: "allEnemies", type: "void", desc: "Void falls on every enemy for 110%, ignoring armor", temple: true }
   ],
   rogue: [
     { id: "flurry", name: "Flurry", mp: 6, target: "enemy", type: "blade", desc: "Three quick cuts for 45% each (surge adds cuts)" },
     { id: "ambush", name: "Ambush", mp: 5, target: "enemy", type: "pierce", desc: "300% on wounded or broken foes, 150% otherwise" },
-    { id: "pilfer", name: "Pilfer", mp: 3, target: "enemy", type: "pierce", desc: "Light hit that steals relics" }
+    { id: "pilfer", name: "Pilfer", mp: 3, target: "enemy", type: "pierce", desc: "Light hit that steals relics" },
+    { id: "shadowstep", name: "Shadowstep", mp: 7, target: "enemy", type: "pierce", desc: "Strip 2 wards, then strike for 120%", temple: true }
   ]
 };
+// special skills (temple: true) are learned at the Pale Temple Lv 3
+const heroSkills = (id) => (SKILLS[id] || []).filter((s) => !s.temple || bLevel("temple") >= 3);
 const ITEMS = {
   draught: { name: "Healing Draught", icon: "\u{1F9EA}", target: "ally", desc: "Restore 40% HP" },
   ember: { name: "Ember of Return", icon: "\u{1FAB6}", target: "koAlly", desc: "Revive a fallen ally at 30% HP" }
@@ -2916,6 +2927,14 @@ function heroBattleStats(h) {
     perks: g.perks
   };
 }
+// raids grow with the castle: tougher foes, bigger spoils (Void Tower Lv 3 adds 25%)
+function raidInfo(i) {
+  const e = RAID_ENEMIES[i], t = castleTier() - 1;
+  const pay = (1 + 0.8 * t) * (bLevel("tower") >= 3 ? 1.25 : 1);
+  const reward = {};
+  Object.entries(e.reward).forEach(([k, v]) => (reward[k] = Math.round((v * pay) / 5) * 5));
+  return { scale: 1 + 0.25 * t, reward, xp: Math.round(e.xpReward * (1 + 0.5 * t)) };
+}
 function startRaid(idx) {
   const party = championFirst(S.heroes.map((h, i) => i).filter((i) => !S.heroes[i].exp));
   if (!party.length) {
@@ -2928,7 +2947,7 @@ function startRaid(idx) {
   const enc = RAID_ENEMIES[idx];
   startBattle({
     kind: "raid", title: "RAID", name: enc.name, group: enc.group,
-    reward: enc.reward, xpReward: enc.xpReward, troops: minTroops, party,
+    reward: raidInfo(idx).reward, xpReward: raidInfo(idx).xp, scale: raidInfo(idx).scale, troops: minTroops, party,
     scene: idx === 3 ? "rift" : "wastes",
     intro: `The party marches on the ${enc.name}!`
   });
@@ -2945,7 +2964,7 @@ function startBattle(o) {
     return {
       uid: "h" + i, side: "hero", hi: i, id: h.id, name: h.name, icon: h.icon,
       hp, maxHp: st.hp, mp, maxMp: st.mp, atk: st.atk, def: st.def, spd: st.spd,
-      guard: false, ko: hp <= 0, sp: st.perks.includes("surge") ? 2 : 1, noGain: false, perks: st.perks
+      guard: false, ko: hp <= 0, sp: Math.min(SURGE_MAX, 1 + (st.perks.includes("surge") ? 1 : 0) + (bLevel("tower") >= 2 ? 1 : 0)), noGain: false, perks: st.perks
     };
   });
   const counts = {}, seen = {};
@@ -3021,10 +3040,11 @@ function beginTurn(u) {
     B.phase = "choose";
     B.menu = "main";
     renderBattle();
+    if (S.autoBattle) setTimeout(() => autoAct(u), bwait(450));
   } else {
     B.phase = "enemy";
     renderBattle();
-    setTimeout(() => enemyAct(u), 750);
+    setTimeout(() => enemyAct(u), bwait(750));
   }
 }
 function endRound() {
@@ -3032,7 +3052,7 @@ function endRound() {
   // your troops join in at the end of every round
   if (B.troops > 0 && foes.length) {
     const t = foes[rand(0, foes.length - 1)];
-    const d = Math.max(1, Math.round(B.troops * 0.3) + rand(0, 3) - Math.floor(t.def * 0.3)) * (t.broken ? 2 : 1);
+    const d = Math.max(1, Math.round(B.troops * 0.3) + rand(0, 3) + (bLevel("forge") >= 2 ? 10 : 0) - Math.floor(t.def * 0.3)) * (t.broken ? 2 : 1);
     hurt(t, d);
     B.fx.push({ uid: t.uid, type: "troops" });
     B.log.push(`\u{1F6E1}\u{FE0F} Your troops strike ${t.name} for ${d}.`);
@@ -3050,7 +3070,7 @@ function endRound() {
   B.active = null;
   renderBattle();
   if (checkBattleEnd()) return;
-  setTimeout(startRound, 750);
+  setTimeout(startRound, bwait(750));
 }
 // ---------- damage ----------
 function dmgCalc(att, target, mult = 1, pierce = false) {
@@ -3075,6 +3095,7 @@ function dmgCalc(att, target, mult = 1, pierce = false) {
   return d;
 }
 function knowsWeak(key, type) {
+  if (bLevel("tower") >= 1) return true; // the Void Tower's scouts report every weakness
   return !!(S.weakSeen && S.weakSeen[key] && S.weakSeen[key].includes(type));
 }
 // one hit of a typed attack: weakness, wards, break and damage
@@ -3173,7 +3194,7 @@ function skillCost(s) {
 function chooseSkill(id) {
   const h = activeUnit();
   if (!h || B.phase !== "choose") return;
-  const s = SKILLS[h.id].find((x) => x.id === id);
+  const s = heroSkills(h.id).find((x) => x.id === id);
   if (!s || h.mp < skillCost(s)) return;
   if (s.target === "self" || s.target === "allEnemies") runSkill(h, s, null);
   else {
@@ -3241,6 +3262,24 @@ function runSkill(h, s, target) {
     B.shieldWall = true;
     B.heroes.filter((x) => !x.ko).forEach((x) => B.pops.push({ uid: x.uid, txt: "SHIELDED", cls: "void" }));
     B.log.push(`\u{1F6E1} ${h.name} raises a Shield Wall!`);
+  } else if (s.id === "rally") {
+    B.heroes.filter((x) => !x.ko).forEach((x) => {
+      healUnit(x, Math.round(x.maxHp * 0.25));
+      if (x !== h) x.mp = Math.min(x.maxMp, x.mp + 3);
+    });
+    B.log.push(`\u{1F4EF} ${h.name} rallies the party!`);
+  } else if (s.id === "starfall") {
+    const hits = B.enemies.filter((e) => !e.ko).map((e) => strike(h, e, 1.1 * pow, "void", true));
+    B.quake = true;
+    B.log.push(`\u{1F320} Starfall crashes down (${hits.join(", ")}).`);
+  } else if (s.id === "shadowstep") {
+    if (!target.broken) {
+      target.wards = Math.max(0, target.wards - 2);
+      if (target.wards === 0) breakEnemy(target);
+      else B.pops.push({ uid: target.uid, txt: "-2 WARDS", cls: "void" });
+    }
+    const d = strike(h, target, 1.2 * pow, "pierce");
+    B.log.push(`\u{1F5E1}\u{FE0F} ${h.name} steps through the shadows and strikes ${target.name} for ${d}.`);
   } else if (s.id === "cleave" || s.id === "hex") {
     const base = s.id === "cleave" ? (hasBoon("embercleave") ? 1 : 0.7) : 0.6;
     const hits = B.enemies.filter((e) => !e.ko).map((e) => strike(h, e, base * pow, s.type));
@@ -3298,7 +3337,66 @@ function afterHeroAction() {
   B.phase = "anim";
   B.menu = "main";
   renderBattle();
-  setTimeout(nextTurn, 800);
+  setTimeout(nextTurn, bwait(800));
+}
+// ---------- auto-battle: the party fights on its own, and faster ----------
+const bwait = (ms) => (S.autoBattle ? Math.round(ms * 0.45) : ms);
+function toggleAuto() {
+  S.autoBattle = !S.autoBattle;
+  saveGame(true);
+  renderBattle();
+  const a = activeUnit();
+  if (S.autoBattle && a && a.side === "hero" && B.phase === "choose") autoAct(a);
+  else if (S.autoBattle && B.phase === "target") {
+    cancelTarget();
+    autoAct(activeUnit());
+  }
+}
+// picks a sensible action: heal the hurt, revive the fallen, break wards, finish the weak
+function autoAct(h) {
+  if (!B || B.over || !S.autoBattle || B.phase !== "choose" || activeUnit() !== h) return;
+  const foes = B.enemies.filter((e) => !e.ko), allies = B.heroes.filter((x) => !x.ko);
+  if (!foes.length) return;
+  const skills = heroSkills(h.id).filter((s) => h.mp >= skillCost(s));
+  const has = (id) => skills.find((s) => s.id === id);
+  const hurt = allies.filter((x) => x.hp < x.maxHp * 0.45).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp);
+  const foeHp = foes.reduce((a, e) => a + e.hp, 0) / B.enemies.reduce((a, e) => a + e.maxHp, 0);
+  const act = (fn, target) => {
+    fn();
+    if (B.phase === "target" && target) pickTarget(target.uid);
+  };
+  // 1. keep the party standing
+  if (B.heroes.some((x) => x.ko) && (S.items.ember || 0) > 0 && foeHp > 0.3) return act(() => chooseItem("ember"), B.heroes.find((x) => x.ko));
+  if (has("rally") && hurt.length >= 2) return act(() => chooseSkill("rally"));
+  if (has("mend") && hurt.length) return act(() => chooseSkill("mend"), hurt[0]);
+  if (hurt.length && hurt[0].hp < hurt[0].maxHp * 0.25 && (S.items.draught || 0) > 0 && !B.heroes.some((x) => x.id === "mystic" && !x.ko && x.mp >= 5))
+    return act(() => chooseItem("draught"), hurt[0]);
+  // 2. pick the target: broken foes first (double damage), then the weakest
+  const target = [...foes].sort((a, b) => (b.broken ? 1 : 0) - (a.broken ? 1 : 0) || a.hp - b.hp)[0];
+  const weakMul = (t, type) => (type && t.weak.includes(type) && knowsWeak(t.key, type) ? 1.4 : 1);
+  // the Mystic keeps enough MP to heal unless nobody is hurt
+  const reserve = h.id === "mystic" && allies.some((x) => x.hp < x.maxHp * 0.7) ? 5 : 0;
+  let best = { score: weakMul(target, ATTACK_TYPE[h.id]), go: () => act(() => chooseAction("attack"), target) };
+  skills.forEach((s) => {
+    if (h.mp - skillCost(s) < reserve && s.id !== "mend") return;
+    const each = { cleave: hasBoon("embercleave") ? 1 : 0.7, hex: 0.6, starfall: 1.4, brand: 1.5, rift: 2, flurry: 1.35, shadowstep: target.broken ? 1.2 : 2, ambush: target.broken || target.hp < target.maxHp * 0.5 || hasBoon("instinct") ? 3 : 1.5 }[s.id];
+    if (!each) return;
+    let score;
+    if (s.target === "allEnemies") score = foes.reduce((a, e) => a + each * weakMul(e, s.type), 0) * 0.9;
+    else score = each * weakMul(target, s.type) * 0.85;
+    if (score > best.score) best = { score, go: () => act(() => chooseSkill(s.id), target) };
+  });
+  // 3. spend surge when it's banked up, or on a boss
+  const surgeOk = h.sp >= 4 || (h.sp >= 2 && foes.some((e) => e.boss));
+  B.surge = surgeOk ? Math.min(SURGE_SPEND, h.sp) : 0;
+  best.go();
+  // if that didn't go through for any reason, just attack
+  if (B && !B.over && B.phase !== "anim" && activeUnit() === h) {
+    if (B.phase === "target") cancelTarget();
+    B.surge = 0;
+    chooseAction("attack");
+    if (B.phase === "target") pickTarget(target.uid);
+  }
 }
 // ---------- enemy turns ----------
 function enemyAct(e) {
@@ -3323,7 +3421,7 @@ function enemyAct(e) {
     B.log.push(`\u{1F4A5} ${e.name} hits ${t.name} for ${d}.`);
   }
   renderBattle();
-  setTimeout(nextTurn, 700);
+  setTimeout(nextTurn, bwait(700));
 }
 function checkBattleEnd() {
   if (!B || B.over) return true;
@@ -3647,6 +3745,7 @@ function buildBattleStage() {
     <div class="bt-field" id="bt-field"></div>
     <div class="bt-grade bt-grade-${B.scene}"></div>
     <div class="bt-actor" id="bt-actor"></div>
+    <button class="bt-auto" id="bt-auto" onclick="toggleAuto()"></button>
     <div class="bt-order" id="bt-order"></div>
     <div class="bt-party" id="bt-party"></div>
     <div class="bt-banner" id="bt-banner"></div>
@@ -3826,7 +3925,7 @@ function battleMenuHtml() {
   const n = B.surge;
   let body;
   if (B.menu === "skills") {
-    body = SKILLS[a.id]
+    body = heroSkills(a.id)
       .map((s) => {
         const t = s.type ? DMG_TYPES[s.type].icon + " " : "";
         const boost = n && !s.noSurge ? ` <em>${s.id === "flurry" ? `+${n} cuts` : `+${n * 50}%`}</em>` : "";
@@ -3867,6 +3966,12 @@ function renderBattle() {
   const order = [a, ...B.queue.map(unitById)].filter((u) => u && !u.ko).slice(0, 7);
   $("bt-order").innerHTML = order.length ? `<small>THIS ROUND</small>${order.map((u, i) => `<span class="od ${u.side} ${i === 0 && a ? "now" : ""}">${miniSprite(u)}</span>`).join("")}` : "";
   $("bt-party").innerHTML = partyPanelHtml();
+  const ab = $("bt-auto");
+  if (ab) {
+    ab.className = "bt-auto" + (S.autoBattle ? " on" : "");
+    ab.innerHTML = S.autoBattle ? "\u{25B6}\u{25B6} AUTO ON" : "\u{25B6} AUTO";
+    ab.style.display = B.over ? "none" : "";
+  }
   $("bt-cmd").innerHTML = battleMenuHtml();
   // keep the phone turn-order strip just above the command panel, whatever its height
   box.style.setProperty("--cmdh", $("bt-cmd").offsetHeight + "px");
@@ -5660,6 +5765,44 @@ function hideChoice() {
   $("w-choice").classList.remove("open");
   W.busy = false;
 }
+// ---------- the Shadow Market's trading post ----------
+// give: what you pay per 1 unit received. Better rates from Market Lv 2.
+function tradeRates() {
+  const lv = bLevel("market"), good = lv >= 2;
+  const t = [
+    { from: "stone", to: "essence", give: good ? 4 : 6 },
+    { from: "wood", to: "essence", give: good ? 4 : 6 },
+    { from: "stone", to: "wood", give: good ? 1.5 : 2 },
+    { from: "wood", to: "stone", give: good ? 1.5 : 2 },
+    { from: "essence", to: "stone", give: good ? 0.25 : 1 / 3 },
+    { from: "essence", to: "wood", give: good ? 0.25 : 1 / 3 }
+  ];
+  if (lv >= 4) t.push({ from: "essence", to: "relics", give: 25 });
+  return t;
+}
+function tradeHtml() {
+  if (bLevel("market") <= 0) return `<div class="section-label" style="margin-top:14px">Trading Post</div><div class="altar-note">Build the Shadow Market to trade surplus stone and wood for essence, and back.</div>`;
+  return `<div class="section-label" style="margin-top:14px">Trading Post</div>
+    ${tradeRates().map((r, i) => {
+      const per = r.give >= 1 ? `${+r.give.toFixed(1)} ${r.from} \u{2192} 1 ${r.to}` : `1 ${r.from} \u{2192} ${Math.round(1 / r.give)} ${r.to}`;
+      const lots = r.to === "relics" ? [1, 5] : r.give >= 1 ? [10, 100] : [100, 1000];
+      return `<div class="tr-row"><div class="tr-what">${COST_ICON[r.from]} \u{2192} ${COST_ICON[r.to]}<small>${per}</small></div>
+        ${lots.map((n) => `<button class="rs-buy" ${(S.res[r.from] || 0) >= Math.ceil(n * r.give) ? "" : "disabled"} onclick="doTrade(${i},${n})">+${n}</button>`).join("")}
+        <button class="rs-buy" ${(S.res[r.from] || 0) >= Math.ceil(r.give) ? "" : "disabled"} onclick="doTrade(${i},-1)">Max</button></div>`;
+    }).join("")}`;
+}
+function doTrade(i, n) {
+  const r = tradeRates()[i];
+  if (!r) return;
+  const have = S.res[r.from] || 0;
+  if (n < 0) n = Math.floor(have / r.give);
+  n = Math.min(n, Math.floor(have / r.give));
+  if (n <= 0) return;
+  S.res[r.from] -= Math.ceil(n * r.give);
+  addCapped(S.res, r.to, n);
+  notify(`Traded for ${n} ${r.to}.`, "success");
+  openBuildingModal("market");
+}
 // ---------- the Void Archive's research (permanent) ----------
 const RESEARCH = [
   { id: "hardy", name: "Hardened Bodies", icon: "\u{2764}\u{FE0F}", tier: 1, max: 3, relics: [5, 10, 18], essence: [20, 40, 80], desc: "+8% max HP per rank" },
@@ -6365,7 +6508,7 @@ function renderForge() {
   const at = ATTACK_TYPE[F.cls];
   $("fg-skills").innerHTML =
     `<div class="fg-skill"><b>${DMG_TYPES[at].icon} Attack</b><span>Basic strikes deal ${DMG_TYPES[at].name} damage. Surge adds extra hits.</span></div>` +
-    SKILLS[F.cls].map((s) => `<div class="fg-skill"><b>${s.type ? DMG_TYPES[s.type].icon + " " : ""}${s.name}<em>${s.mp} MP</em></b><span>${s.desc}</span></div>`).join("") +
+    heroSkills(F.cls).map((s) => `<div class="fg-skill"><b>${s.type ? DMG_TYPES[s.type].icon + " " : ""}${s.name}<em>${s.mp} MP</em></b><span>${s.desc}</span></div>`).join("") +
     `<div class="fg-skill trait"><b>\u{1F9ED} ${HERO_SPECIALTY[F.cls].label}</b><span>On expeditions: ${HERO_SPECIALTY[F.cls].desc}</span></div>`;
 }
 function confirmForge() {
@@ -7402,6 +7545,24 @@ function installApp() {
 // offline support and home-screen install, on the real site only
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && window.top === window)
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+// ==============================================================
+// RESOURCE GUIDE  -  tap (or hover) any resource to see what it's for
+// ==============================================================
+const RES_INFO = [
+  ["Stone", "Building material. Every building and upgrade costs stone. The Quarry makes it."],
+  ["Wood", "Building material. The Farm makes it. Trade surplus at the Shadow Market."],
+  ["Essence", "The rare one. Upgrades, research and forging all need it. The Keep, Archive, Temple and Echo Well make it."],
+  ["Relics", "Found on expeditions and in Descents. Spent on Archive research and forging gear. Kept through rebirth."],
+  ["Gold", "Found in Descents and bounties. Rush buildings, buy at the Descent market, Masterwork gear. Kept through rebirth."],
+  ["Troops", "Trained by the Barracks. Raids cost troops, and they strike alongside your heroes each round."]
+];
+document.querySelectorAll("#topbar .res").forEach((chip, i) => {
+  const info = RES_INFO[i];
+  if (!info) return;
+  chip.title = `${info[0]}: ${info[1]}`;
+  chip.style.cursor = "help";
+  chip.addEventListener("click", () => notify(`${info[0]}: ${info[1]}`, "info", 5000));
+});
 // ==============================================================
 // INIT
 // ==============================================================

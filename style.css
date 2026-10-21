@@ -1363,3 +1363,32 @@ align-items:center;justify-content:center;padding:20px;
 .tr-what{flex:1;font-size:15px}
 .tr-what small{display:block;font-family:'Cinzel',serif;font-size:9px;letter-spacing:.5px;color:#8a7d68}
 .raid-str{margin-left:6px;color:#e8907c;font-family:'Cinzel',serif;font-size:9px}
+
+/* ================================================================
+   DEVICE FIXES (from the phone / tablet / desktop playtest)
+   ================================================================ */
+/* notifications sit under the top bar and never block taps */
+#notif-stack{top:calc(var(--tbh,46px) + 8px)}
+/* the rotated map pad needs room for its corners */
+#world.iso .w-pad{margin:24px 34px 24px 24px}
+@media(max-width:560px){
+  /* phone top bar: one row of resources, one row of icon buttons */
+  #topbar{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;padding:6px 8px}
+  #topbar .res{order:0;padding:4px 3px;gap:3px;justify-content:center;min-width:0}
+  #topbar .res-ic{font-size:13px}
+  #topbar .res-v{font-size:11px;min-width:0}
+  #topbar .res-r{display:none}
+  #castle-badge{order:1;grid-column:span 2;justify-content:center;text-align:center}
+  #topbar .spacer{display:none}
+  #topbar .top-btn{order:2;min-height:34px;padding:4px 0;font-size:16px;letter-spacing:0}
+  .tb-lb{display:none}
+  /* notifications: full width, centered, below the bar */
+  #notif-stack{left:8px;right:8px;align-items:center}
+  .notif{max-width:100%}
+  /* battle: a slimmer party panel */
+  .bt-party{width:176px;right:6px;gap:4px}
+  .bp-row{padding:4px 8px 5px}
+  .bp-top b{font-size:10px}
+  .bp-stat{grid-template-columns:18px 1fr 50px;gap:4px}
+  .bp-stat span{font-size:11px}
+}

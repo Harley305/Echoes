@@ -3762,7 +3762,9 @@ function stageGeom() {
   const w = box.clientWidth, h = box.clientHeight;
   const portrait = h > w * 1.1;
   // feet of the units live between top and bottom (as % of height)
-  return { w, h, portrait, top: portrait ? 34 : 44, bottom: portrait ? 60 : 76, horizon: h * (portrait ? 0.3 : 0.4) };
+  // on phones the party panel sits top-right, so the units stand a little lower
+  const phone = portrait && w < 560;
+  return { w, h, portrait, top: phone ? 42 : portrait ? 34 : 44, bottom: phone ? 64 : portrait ? 60 : 76, horizon: h * (portrait ? 0.3 : 0.4) };
 }
 const stageClock = frameClock();
 function stageLoop(t) {
@@ -7563,6 +7565,13 @@ document.querySelectorAll("#topbar .res").forEach((chip, i) => {
   chip.style.cursor = "help";
   chip.addEventListener("click", () => notify(`${info[0]}: ${info[1]}`, "info", 5000));
 });
+// notifications sit just below the top bar, whatever its height on this screen
+function measureTopbar() {
+  const tb = $("topbar");
+  if (tb) document.documentElement.style.setProperty("--tbh", tb.offsetHeight + "px");
+}
+window.addEventListener("resize", measureTopbar);
+setTimeout(measureTopbar, 0);
 // ==============================================================
 // INIT
 // ==============================================================
@@ -7863,7 +7872,7 @@ function cycleSound() {
 }
 function updateSoundBtn() {
   const b = $("sound-btn"), w = $("w-sound");
-  if (b) b.innerHTML = ["\u{1F50A} Sound", "\u{1F509} SFX only", "\u{1F507} Muted"][S.audio.mode];
+  if (b) b.innerHTML = ["\u{1F50A}<span class=\"tb-lb\"> Sound</span>", "\u{1F509}<span class=\"tb-lb\"> SFX only</span>", "\u{1F507}<span class=\"tb-lb\"> Muted</span>"][S.audio.mode];
   if (w) w.innerHTML = ["\u{1F50A}", "\u{1F509}", "\u{1F507}"][S.audio.mode]; // icon only on the map header
 }
 // first tap anywhere unlocks audio (required on iPhone)
